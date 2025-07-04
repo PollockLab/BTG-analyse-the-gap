@@ -2,9 +2,15 @@
 title: "Challenge: Getting Even"
 author: Your name here
 format: html
+toc: true
 ---
 
 This analysis is based on the challenge script `evenness-priority-maps.R` here: [https://github.com/CIEE-Living-Data-Project/blitz-the-gap/tree/main/02_scripts/getting-even](https://github.com/CIEE-Living-Data-Project/blitz-the-gap/tree/main/02_scripts/getting-even).
+
+```{r, setup, include=FALSE}
+# change this to set working directory to the project root
+knitr::opts_knit$set(root.dir = '~/Documents/GitHub/BTG-analyse-the-gap/')
+```
 
 
 ## What this script does:
