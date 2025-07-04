@@ -1,0 +1,34 @@
+---
+title: "Challenge: Getting Even"
+author: Your name here
+format: html
+---
+
+This analysis is based on the challenge script `evenness-priority-maps.R` here: [https://github.com/CIEE-Living-Data-Project/blitz-the-gap/tree/main/02_scripts/getting-even](https://github.com/CIEE-Living-Data-Project/blitz-the-gap/tree/main/02_scripts/getting-even).
+
+
+## What this script does:
+
+Some text here about the steps in this script and what the objective/output is.
+
+
+## Data
+
+```{r}
+# some code here
+```
+
+
+## Analysis
+
+
+```{r}
+# some code here
+```
+
+
+## Results
+
+```{r}
+# some code to make maps / plots here
+```
