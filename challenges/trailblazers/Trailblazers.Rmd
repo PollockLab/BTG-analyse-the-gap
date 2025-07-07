@@ -1,0 +1,170 @@
+---
+title: "Trailblazers"
+author: "Leeya Nagpal"
+date: "2025-07-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(root.dir = 'C:/Users/dogpa/SpeciesList/relevantSpecies/')
+
+library(ggplot2)
+library(dplyr)
+library(arrow)
+library(dbplyr, warn.conflicts = FALSE)
+library(duckdb)
+library(terra)
+library(mapview) # for interactive maps
+library(ineq)
+library(leafpop)
+```
+
+## Data
+
+This file demonstrates the workflow needed to generate the found species from Blitz the Gap Data
+
+Firstly, the both new and old datasets must be loaded in, as well as the original 'Missing Species' Lists
+```{r Data}
+
+parks <- sf::st_read(dsn = "00_rawdata/trailblazers/national_parks/national parks.shp")
+canada <- sf::read_sf("00_rawdata/trailblazers/canada-polygon/canada.outline.shp")
+base.5k <- terra::rast("00_rawdata/base-layers/canada.base.5k.tiff")
+base.1k <- terra::rast("00_rawdata/base-layers/canada.base.1k.tiff")
+
+#inat parquet
+inat_pq <- arrow::open_dataset("~/Desktop/RProjects/Blitz-the-gap/00_rawdata/trailblazers/iNat/iNat_non_sensitive_data_Jan2025.parquet")
+
+# Create query and collect afterwards
+query <- inat_pq |> 
+  filter(quality_grade == "research") |> #filter to research grade
+  filter(positional_accuracy < 1000) |> #filter to accurate 
+  select(iconic_taxon_name,scientific_name,longitude,latitude) |>
+  collect()
+
+# Rework
+inat.v <- terra::vect(query, geom = c("longitude","latitude"), crs="+proj=longlat +ellps=WGS84")
+inat.v <- terra::project(inat.v, crs(base.1k))
+inat.v <- terra::crop(inat.v, canada)
+
+# simplify parks polygons
+parks.simple = sf::st_simplify(parks, preserveTopology = FALSE, dTolerance = 1000) # 1 km tolerance
+parks.sv <- vect(parks.simple)
+
+
+```
+
+## Analysis
+
+Analysis required for trailblazers:
+
+```{r Analysis}
+inat.pr <- project(inat.v, crs(parks.sv))
+
+
+obs_with_polygons <- terra::intersect(inat.pr, parks.sv)
+obs_counts <- as.data.frame(table(obs_with_polygons$NAME_E))
+
+p1k <- obs_counts %>% 
+  filter(Freq > 1000) %>% 
+  arrange(desc(Freq)) %>% 
+  rename(Park_name=Var1, N_obs=Freq) %>% 
+  write.csv("~/Desktop/RProjects/Blitz-the-gap/00_rawdata/trailblazers/parks-observations/1k.csv")
+
+##### Gini index:
+pk <- pk1[,-1]
+
+gini_park <- function(park.name){
+  print(park.name) # To keep track
+  
+  # Check which ones are done already
+  parks.done <- read.csv("01_outdata/trailblazers/Gini/parks-gini.csv")[,-1]
+  if(park.name %in% parks.done$Park_name){
+    return()
+  } else {
+  park <- parks %>% 
+    sf::st_as_sf() %>% 
+    filter(NAME_E == park.name) %>% 
+    sf::st_simplify(preserveTopology = FALSE, dTolerance = 2000) %>% #simplify outline to 2k
+    vect() %>% 
+    project(crs(inat.v))
+  
+  inat.park <- terra::crop(inat.v, park)
+  inat.rast <- rasterize(inat.park, base.1k, fun = "length")
+  
+  r_masked <- mask(inat.rast, park)
+  r_crop <- crop(r_masked, park)  # tighten extent to polygon
+  
+  # Extract values inside polygon
+  vals <- values(r_crop, na.rm = TRUE)
+  
+  # Compute Gini index
+  gini <- Gini(vals)
+  
+  output <- c(park.name,
+              pk$N_obs[pk$Park_name == park.name],
+              round(gini, 2),
+              ifelse(gini > 0.9, 
+                                      1,
+                                      ifelse(gini > 0.75, 2, 3)))
+  
+  write.csv(rbind(parks.done, output), "01_outdata/trailblazers/Gini/parks-gini.csv")
+  }
+}
+ 
+sapply(pk$Park_name, gini_park)
+
+```
+
+## Results
+
+Here is the list generated below:
+```{r Results, echo = FALSE}
+
+if (file.exists("01_outdata/trailblazers/gini_parks_map.rds")){
+  gini_parks_map <- readRDS("01_outdata/trailblazers/gini_parks_map.rds")
+} else{
+
+## Create objects to plot
+park_gini <- read.csv("01_outdata/trailblazers/Gini/parks-gini.csv")[,-1] %>% 
+  select(-priority)
+
+gini_parks_map <- sf::st_as_sf(parks) %>%
+  mutate(Park_name = gsub("\\(Recreational Class\\)|\\(Waterway Class\\)|\\(Natural Environment Class\\)|\\(Natural Environment Class\\)|\\(Québec\\)",
+                          "", NAME_E) %>% trimws()) %>% 
+  select(Park_name, geometry) %>% 
+  right_join(park_gini, by="Park_name") %>% 
+  filter(gini >= 0) %>% 
+  mutate(Priority = factor(ifelse(gini > 0.85, 
+                            1,
+                            ifelse(gini > 0.75, 2, 3)))) %>% 
+  rename(Park = Park_name)
+  
+saveRDS(gini_parks_map, "01_outdata/trailblazers/gini_parks_map.rds")
+}
+
+parks_centroid <- gini_parks_map %>% 
+  sf::st_centroid()
+
+colors <- c("#fc8d59", "#ffffbf", "#99d594")
+
+
+## run mapview
+mapviewOptions(basemaps = c("OpenStreetMap"),
+               na.color = "transparent")
+
+m = mapview(gini_parks_map, 
+            basemaps = "OpenStreetMap",
+            legend = T,
+            layer.name = list("Priority"),
+            zcol = "Priority",
+            col.regions = colors,
+            label = paste0("<b>", gini_parks_map$Park,"</b><br>"),
+            popup = popupTable(gini_parks_map, zcol = c("Park", "Priority"))) +
+  mapview(parks_centroid,
+          legend = F,
+          zcol = "Priority",
+          col.regions = colors,
+          label = paste0("<b>", gini_parks_map$Park,"</b><br>"),
+          popup = popupTable(gini_parks_map, zcol = c("Park", "Priority")))
+```
