@@ -1,14 +1,17 @@
 ---
 title: "Trailblazers"
-author: "Leeya Nagpal"
+author: Leeya Nagpal
 date: "2025-07-04"
 output: html_document
 ---
 
+This analysis is based on the challenge script `Accessible-parks.R` here: [https://github.com/CIEE-Living-Data-Project/blitz-the-gap/tree/main/02_scripts/Trailblazers](https://github.com/CIEE-Living-Data-Project/blitz-the-gap/tree/main/02_scripts/Trailblazers).
+
+This challenge was made by Lukas Van Riel as part of the Living Data Project working group.
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_chunk$set(root.dir = 'C:/Users/dogpa/SpeciesList/relevantSpecies/')
-
+knitr::opts_knit$set(root.dir = '~/Documents/GitHub/BTG-analyse-the-gap/')
 library(ggplot2)
 library(dplyr)
 library(arrow)
@@ -20,11 +23,12 @@ library(ineq)
 library(leafpop)
 ```
 
+## What this script does:
+This script uses the code from the original Trailblazers Challenge (designed by Lukas Van Riel) to visualize the new priority taxa post-Blitz the Gap. It additionally compares the old and new data, highlighting the areas that have changed priority after the duration of Blitz the Gap.
+
+
 ## Data
 
-This file demonstrates the workflow needed to generate the found species from Blitz the Gap Data
-
-Firstly, the both new and old datasets must be loaded in, as well as the original 'Missing Species' Lists
 ```{r Data}
 
 parks <- sf::st_read(dsn = "00_rawdata/trailblazers/national_parks/national parks.shp")
@@ -41,9 +45,12 @@ query <- inat_pq |>
   filter(positional_accuracy < 1000) |> #filter to accurate 
   select(iconic_taxon_name,scientific_name,longitude,latitude) |>
   collect()
+old <- na.omit(query)
+
+new <- read.csv("newParquet.csv")
 
 # Rework
-inat.v <- terra::vect(query, geom = c("longitude","latitude"), crs="+proj=longlat +ellps=WGS84")
+inat.v <- terra::vect(new, geom = c("longitude","latitude"), crs="+proj=longlat +ellps=WGS84")
 inat.v <- terra::project(inat.v, crs(base.1k))
 inat.v <- terra::crop(inat.v, canada)
 
@@ -74,7 +81,7 @@ p1k <- obs_counts %>%
 ##### Gini index:
 pk <- pk1[,-1]
 
-gini_park <- function(park.name){
+new_gini_park <- function(park.name){
   print(park.name) # To keep track
   
   # Check which ones are done already
@@ -108,21 +115,39 @@ gini_park <- function(park.name){
                                       1,
                                       ifelse(gini > 0.75, 2, 3)))
   
-  write.csv(rbind(parks.done, output), "01_outdata/trailblazers/Gini/parks-gini.csv")
+  write.csv(rbind(parks.done, output), "01_outdata/trailblazers/Gini/new-parks-gini.csv")
   }
 }
  
 sapply(pk$Park_name, gini_park)
 
+#COMPARE WITH OLD MAP
+oldGini <- readRDS("parks_gini.csv")[,1]
+newGini <- readRDS("new-parks-gini.csv")[,1]
+
+colnames(oldGini)[colnames(oldGini) == "priority"] <- "priority_pre"
+colnames(newGini)[colnames(newGini) == "priority"] <- "priority_post"
+
+compare <- full_join(pre, post, by = "Park_name")
+compare <- compare %>%
+  mutate(priority_changed = priority_pre != priority_post,
+         gini_changed = round(as.numeric(gini.x), 2) != round(as.numeric(gini.y), 2))
+
+priority_changes <- compare %>%
+  filter(priority_changed | gini_changed) %>%
+  arrange(desc(gini_changed))
+
 ```
 
 ## Results
 
-Here is the list generated below:
+Plots Below:
+1) Park priority map after Blitz the Gap
+2) Comparison of park priority pre and post BtG
 ```{r Results, echo = FALSE}
 
 if (file.exists("01_outdata/trailblazers/gini_parks_map.rds")){
-  gini_parks_map <- readRDS("01_outdata/trailblazers/gini_parks_map.rds")
+  gini_parks_map <- readRDS("01_outdata/trailblazers/new_gini_parks_map.rds")
 } else{
 
 ## Create objects to plot
@@ -140,31 +165,42 @@ gini_parks_map <- sf::st_as_sf(parks) %>%
                             ifelse(gini > 0.75, 2, 3)))) %>% 
   rename(Park = Park_name)
   
-saveRDS(gini_parks_map, "01_outdata/trailblazers/gini_parks_map.rds")
+saveRDS(gini_parks_map, "01_outdata/trailblazers/new_gini_parks_map.rds")
 }
 
-parks_centroid <- gini_parks_map %>% 
+parks_centroid <- new_gini_parks_map %>% 
   sf::st_centroid()
 
 colors <- c("#fc8d59", "#ffffbf", "#99d594")
 
 
-## run mapview
+## NEW MAP VISUAL
 mapviewOptions(basemaps = c("OpenStreetMap"),
                na.color = "transparent")
 
-m = mapview(gini_parks_map, 
+m = mapview(new_gini_parks_map, 
             basemaps = "OpenStreetMap",
             legend = T,
             layer.name = list("Priority"),
             zcol = "Priority",
             col.regions = colors,
-            label = paste0("<b>", gini_parks_map$Park,"</b><br>"),
-            popup = popupTable(gini_parks_map, zcol = c("Park", "Priority"))) +
+            label = paste0("<b>", new_gini_parks_map$Park,"</b><br>"),
+            popup = popupTable(new_gini_parks_map, zcol = c("Park", "Priority"))) +
   mapview(parks_centroid,
           legend = F,
           zcol = "Priority",
           col.regions = colors,
-          label = paste0("<b>", gini_parks_map$Park,"</b><br>"),
-          popup = popupTable(gini_parks_map, zcol = c("Park", "Priority")))
+          label = paste0("<b>", new_gini_parks_map$Park,"</b><br>"),
+          popup = popupTable(new_gini_parks_map, zcol = c("Park", "Priority")))
+
+#change map
+mapview(priority_changes, 
+            basemaps = "OpenStreetMap",
+            legend = T,
+            layer.name = list("Priority"),
+            zcol = "priority_changed",
+            col.regions = colors)
+
+
+
 ```

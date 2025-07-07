@@ -1,40 +1,234 @@
 ---
 title: "Challenge: Getting Even"
-author: Your name here
+author: Leeya Nagpal 
 format: html
 toc: true
 ---
 
 This analysis is based on the challenge script `evenness-priority-maps.R` here: [https://github.com/CIEE-Living-Data-Project/blitz-the-gap/tree/main/02_scripts/getting-even](https://github.com/CIEE-Living-Data-Project/blitz-the-gap/tree/main/02_scripts/getting-even).
 
+This challenge was made by Lucas Eckert as part of the Living Data Project working group.
+
 ```{r, setup, include=FALSE}
 # change this to set working directory to the project root
 knitr::opts_knit$set(root.dir = '~/Documents/GitHub/BTG-analyse-the-gap/')
+library(ggplot2)
+library(dplyr)
+library(arrow)
+library(dbplyr, warn.conflicts = FALSE)
+library(duckdb)
+library(terra)
+library(raster)
+library(mapview)
+library(gdalcubes)
+library(rstac)
+library(stars)
+library(tmap)
+
 ```
 
 
 ## What this script does:
+This script uses the code from the original Getting Even Challenge (designed by Lucas Eckert) to visualize the new priority taxa post-Blitz the Gap. It additionally compares the old and new data, highlighting the areas that have changed priority taxa after the duration of Blitz the Gap.
 
-Some text here about the steps in this script and what the objective/output is.
-
-
-## Data
+## Load
 
 ```{r}
-# some code here
-```
+## old parquet file - local path
+inat_pq <- arrow::open_dataset("/Users/lucaseckert/Library/CloudStorage/OneDrive-McGillUniversity/Side Projects/Bioblitz/Laura's Lab_Group - data/raw/biodiversity-data/inat-canada/iNat_non_sensitive_data_Jan2025.parquet")
 
+## query
+query <-inat_pq |> 
+  #filter(quality_grade == "research") |> #filter to research grade
+  #dplyr::filter(positional_accuracy < 1000) |> #filter to accurate 
+  dplyr::select(iconic_taxon_name,scientific_name,longitude,latitude) |>
+  collect()
+
+old <-na.omit(query)
+
+## new file
+new <- read.csv("newParquet.csv")
+
+## baselayers
+counties<-terra::vect("counties_of_canada.gpkg")
+
+## overall obs
+county_df< -readRDS("county-data.RDS")
+values(counties)<-left_join(values(counties), select(county_df, CDUID, n.points))
+
+base.5k<-terra::rast("/Users/lucaseckert/Library/CloudStorage/OneDrive-McGillUniversity/Side Projects/Bioblitz/Laura's Lab_Group - data/raw/base-layers/canada.base.5k.tiff")
+```
 
 ## Analysis
 
 
 ```{r}
-# some code here
+
+get_obs<-function(taxa){
+  inat<- new %>% filter(iconic_taxon_name %in% taxa)
+  inat_vect<-terra::vect(inat, geom = c("longitude","latitude"), crs="+proj=longlat +ellps=WGS84")
+  inat_vect<-terra::project(inat_vect, crs(counties))
+  data<-data.frame("CDUID"=counties$CDUID)
+  data$n.points=NA
+  for (i in 1:nrow(data)){
+    c=data$CDUID[i]
+    poly=counties[which(counties$CDUID==c)]
+    points<-crop(inat_vect,ext(poly))
+    data$n.points[i]=length(which(terra::relate(poly,points,relation="intersects")))
+    remove(c,poly,points)
+    print(i)
+  }
+  return(data)
+}
+
+## obs for each taxa
+herp_data<-get_obs(c("Reptilia","Amphibia"))
+bird_data<-get_obs(c("Aves"))
+invert_data<-get_obs(c("Insecta","Arachnida","Mollusca"))
+mammal_data<-get_obs(c("Mammalia"))
+plant_data<-get_obs(c("Plantae"))
+fungi_data<-get_obs(c("Fungi","Chromista","Protozoa"))
+fish_data<-get_obs(c("Actinopterygii"))
+
+## combine
+values(counties)<-values(counties) %>% left_join(select(herp_data, CDUID, n.herps=n.points)) %>% 
+  left_join(select(bird_data, CDUID, n.birds=n.points)) %>% 
+  left_join(select(invert_data, CDUID, n.inverts=n.points)) %>% 
+  left_join(select(mammal_data, CDUID, n.mammals=n.points)) %>% 
+  left_join(select(fish_data, CDUID, n.fish=n.points)) %>% 
+  left_join(select(plant_data, CDUID, n.plants=n.points)) %>% 
+  left_join(select(fungi_data, CDUID, n.fungi=n.points)) %>% 
+  mutate(herp_prop=n.herps/n.points,
+         bird_prop=n.birds/n.points,
+         mammal_prop=n.mammals/n.points,
+         plant_prop=n.plants/n.points,
+         fungi_prop=n.fungi/n.points,
+         fish_prop=n.fish/n.points,
+         invert_prop=n.inverts/n.points)
+
+## z scores
+counties$herp_z<-as.numeric(scale(counties$herp_prop))
+counties$mammal_z<-as.numeric(scale(counties$mammal_prop))
+counties$bird_z<-as.numeric(scale(counties$bird_prop))
+counties$invert_z<-as.numeric(scale(counties$invert_prop))
+counties$plant_z<-as.numeric(scale(counties$plant_prop))
+counties$fungi_z<-as.numeric(scale(counties$fungi_prop))
+counties$fish_z<-as.numeric(scale(counties$fish_prop))
+
+
+
+herp_richness<-rast("ar.richness.tif") %>% 
+  terra::project(base.5k,"bilinear")
+herp_richness[is.na(base.5k)]<-NA
+herp_richness[is.na(herp_richness) & !is.na(base.5k)]<-0
+herp_richness<-terra::project(herp_richness, crs(counties))
+herp_richness_counties<-extract(herp_richness, counties, fun = mean, na.rm = TRUE)
+counties$herp_richness<-herp_richness_counties$sum
+
+mammal_richness<-rast("mammal.richness.tif") %>% 
+  terra::project(base.5k,"bilinear")
+mammal_richness[is.na(base.5k)]<-NA
+mammal_richness[is.na(mammal_richness) & !is.na(base.5k)]<-0
+mammal_richness<-terra::project(mammal_richness, crs(counties))
+mammal_richness_counties<-extract(mammal_richness, counties, fun = mean, na.rm = TRUE)
+counties$mammal_richness<-mammal_richness_counties$sum
+
+plant_richness<-rast("plant.richness.stacks.tif")$modelled.richness %>% 
+  terra::project(base.5k,"bilinear")
+plant_richness[is.na(base.5k)]<-NA
+plant_richness[is.na(plant_richness) & !is.na(base.5k)]<-0
+plant_richness<-terra::project(plant_richness, crs(counties))
+plant_richness_counties<-extract(plant_richness, counties, fun = mean, na.rm = TRUE)
+counties$plant_richness<-plant_richness_counties$modelled.richness
+
+## richness thresholds
+herp_richness_limit<-quantile(counties$herp_richness, 0.25)
+mammal_richness_limit<-quantile(counties$mammal_richness, 0.25)
+plant_richness_limit<-quantile(counties$plant_richness, 0.25)
+
+counties$herp_z[counties$herp_richness<herp_richness_limit]<-NA
+counties$mammal_z[counties$mammal_richness<mammal_richness_limit]<-NA
+counties$plant_z[counties$plant_richness<plant_richness_limit]<-NA
+
+## priority
+priority<-c()
+priority_z<-c()
+for (i in 1:nrow(values(counties))){
+  df<-values(counties)[i,]
+  z_scores<-select(df, ends_with("_z"))
+  taxa<-names(which.min(z_scores))
+  priority[i]<-str_remove(taxa,"_z")
+  priority_z[i]<-z_scores[which.min(z_scores)]
+}
+counties$priority<-priority
+counties$priority_z<-priority_z
+
+## high priority
+z_lim<-quantile(counties$priority_z,0.25)
+counties$priority_z[order(counties$priority_z)][1:101]
+counties$high_priority<-NA
+counties$med_priority<-NA
+counties$high_priority[counties$priority_z<(-1.301)]<-counties$priority[counties$priority_z<(-1.301)]
+counties$med_priority[counties$priority_z<(-1.05)]<-counties$priority[counties$priority_z<(-1.05)]
+
+
+#READ IN OLD FILE
+old_county<-readRDS("county-evenness_df.RDS")
+
+
+#COMPARE OLD AND NEW
+comparison_df <- old_county %>%
+  st_drop_geometry() %>%  # Drop geometry for table comparison
+  select(CDUID, old_priority = priority, old_high_priority = high_priority, old_med_priority = med_priority) %>%
+  left_join(
+    counties %>%
+      st_drop_geometry() %>%
+      select(CDUID, new_priority = priority, new_high_priority = high_priority, new_med_priority = med_priority),
+    by = "CDUID"
+  )
+
+comparison_df <- comparison_df %>%
+  mutate(priority_changed = old_priority != new_priority,
+         high_priority_changed = old_high_priority != new_high_priority,
+         med_priority_changed = old_med_priority != new_med_priority)
+
+
+anyChange <- comparison_df %>%
+  filter(priority_changed | high_priority_changed | med_priority_changed)
+
+
+counties_changed <- counties %>%
+  left_join(anyChange, by = "CDUID") %>%
+  filter(priority_changed | high_priority_changed | med_priority_changed)
+
 ```
 
 
 ## Results
 
 ```{r}
-# some code to make maps / plots here
+## map data
+map_data_raw<-st_as_sf(counties)
+map_data_raw<-st_simplify(map_data_raw, dTolerance = 1000, preserveTopology = TRUE)
+map_data_raw<-ms_simplify(map_data_raw, keep=0.05, keep_shapes = F)
+map_data<-map_data_raw %>% mutate(priority=factor(priority, levels=c("bird","fish","fungi","herp","invert","mammal","plant"), labels = c("Birds","Fishes","Fungi","Reptiles and Amphibians","Invertebrates","Mammals","Plants")),
+                              high_priority=factor(high_priority, levels=c("bird","fish","fungi","herp","invert","mammal","plant"), labels = c("Birds","Fishes","Fungi","Reptiles and Amphibians","Invertebrates","Mammals","Plants")),
+                              med_priority=factor(med_priority, levels=c("bird","fish","fungi","herp","invert","mammal","plant"), labels = c("Birds","Fishes","Fungi","Reptiles and Amphibians","Invertebrates","Mammals","Plants"))) %>% 
+  select(census_district=CDNAME, priority, high_priority, med_priority)
+
+## NEW MAP
+priority_map<-mapview(map_data,
+             zcol="priority",
+             col.regions=c("#8f0d13","#173c99","#f57d05","#503478","#d9a414","#8f4c09","#1b5e08"),
+             layer.name="Priority",
+             label=map_data$census_district,
+             popup = popupTable(
+               st_drop_geometry(map_data)[, c("census_district","priority")],
+               feature.id = F,
+               row.numbers = F))
+
+
+# COMPARISON PLOT
+tm_shape(counties_changed) +
+  tm_polygons("priority_changed", palette = c("gray", "red"))
 ```

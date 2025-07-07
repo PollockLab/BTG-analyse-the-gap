@@ -7,7 +7,7 @@ date: "2025-07-04"
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_chunk$set(root.dir = 'C:/Users/dogpa/SpeciesList/relevantSpecies/')
+knitr::opts_knit$set(root.dir = '~/Documents/GitHub/BTG-analyse-the-gap/')
 
 library(dplyr) 
 library(tidyr)
@@ -52,7 +52,8 @@ allMissing <- file_list %>%
 realMissing <- subset(allMissing, !(allMissing$Name %in% old$scientific_name))
 realMissing <- realMissing[,c(1,6)] #Isolate scientific name and Iconic Taxa Columns
 
-notMissingNow <- subset(realMissing, realMissing$Name %in% new$scientific_name)
+notMissingNow <- subset(realMissing, realMissing$Name %in% new$scientific_name) #Pull species that are in missing list AND in new sampled list
+taxabreakdown <- data.frame(table(notMissingNow$iconic_taxon_name))
 ```
 
 ## Results
@@ -60,4 +61,5 @@ notMissingNow <- subset(realMissing, realMissing$Name %in% new$scientific_name)
 Here is the list generated below:
 ```{r Results, echo = FALSE}
 print(notMissingNow)
+print(taxabreakdown)
 ```
