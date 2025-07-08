@@ -1,6 +1,7 @@
 ---
 title: "Challenge: Getting Even"
 author: Leeya Nagpal 
+date: "2025-07-07"
 format: html
 toc: true
 ---
@@ -206,6 +207,9 @@ counties_changed <- counties %>%
 
 ## Results
 
+Plots Below:
+1) Priority map after Blitz the Gap
+2) Comparison of priority areas pre and post BtG
 ```{r}
 ## map data
 map_data_raw<-st_as_sf(counties)

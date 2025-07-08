@@ -1,0 +1,168 @@
+---
+title: "Challenge: Make a Splash"
+author: Leeya Nagpal
+date: "2025-07-08"
+format: html
+toc: true
+---
+
+This analysis is based on the challenge script `fw.R` here: [https://github.com/CIEE-Living-Data-Project/blitz-the-gap/tree/main/02_scripts/freshwater_challenge](https://github.com/CIEE-Living-Data-Project/blitz-the-gap/tree/main/02_scripts/freshwater_challenge).
+
+This challenge was made by Lindsay Trottier and Christophe Brabant as part of the Living Data Project working group.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = '~/Documents/GitHub/BTG-analyse-the-gap/')
+
+library(arrow)
+library(dbplyr, warn.conflicts = FALSE)
+library(duckdb)
+library(terra)
+
+```
+
+## What this script does
+
+This script uses the code from the original Make a Splash Challenge (designed by Lindsay Trottier and Christophe Brabant) to visualize the new priority areas post-Blitz the Gap. It additionally compares the old and new data, highlighting the areas that have changed priority taxa after the duration of Blitz the Gap.
+
+## Load Data
+```{r Data}
+
+inat_pq <- arrow::open_dataset("C:/Users/dogpa/OneDrive - McGill University/Laura's Lab_Group - inat-canada/iNat_non_sensitive_data_Jan2025.parquet")
+
+query <- inat_pq |> 
+  # Summarise number of obs per species, per species group
+  group_by(iconic_taxon_name, scientific_name) |>
+  summarize(total_obs = n()) |> 
+  # load the query into our R session
+  collect()
+
+## omit nas
+old<-na.omit(query)
+
+new <- read.csv("C:/Users/dogpa/SpeciesList/relevantSpecies/june1-18.csv")
+
+#species
+canada_gbif_clean <- read.csv("C:/Users/linds/OneDrive - McGill University/LivingData_Blitz/can_gbif_names.csv")
+
+canada = sf::read_sf("canada.outline.shp")
+base.50k = terra::rast("canada.base.5k.tiff")
+ 
+boat = read_sf("canada_launches_all.gpkg")
+endemism = read_sf("endemism_all.gpkg")
+lakes = read_sf("lhy_000c16a_e.shp")
+coast = read_sf("coast2.gpkg")
+
+
+```
+
+## Analysis
+
+```{r Analysis}
+
+inat.v = terra::vect(obs, geom = c("longitude","latitude"),
+                     crs="+proj=longlat +ellps=WGS84")
+inat.v = terra::project(inat.v, crs(base.50k))
+inat.v = terra::crop(inat.v, canada)
+fw.density = rasterize(inat.v, base.50k, fun = "count")
+
+#Project all other data on "canada" crs
+endemism <- st_transform(endemism, crs = st_crs(canada))
+boat <- st_transform(boat, crs = st_crs(canada))
+lakes <- st_transform(lakes, crs = st_crs(canada)) 
+coast <- st_transform(coast, crs = st_crs(canada))
+
+coast2 = st_intersection(coast, canada)
+coast2 = coast2 %>% select(c(HYDROUID, NAME, PRUID, geom))
+
+water = rbind(lakes, coast2 %>% rename(geometry=geom))
+
+#Get count of boats in each feature
+intersections <- st_intersects(water, boat) 
+boat_counts <- lengths(intersections)  
+water$boat_count <- boat_counts
+rm(boat_counts, intersections)
+
+#Get mean endemism per feature
+idx <- st_intersects(endemism, water)
+endemism_sub <- endemism[lengths(idx) > 0, ]
+
+lake_endemism <- st_intersection(water, endemism_sub)
+lake_endemism <- lake_endemism %>%
+  st_drop_geometry() %>%
+  group_by(HYDROUID) %>%
+  summarize(mean_endemism = mean(total_endemism, na.rm = TRUE))
+
+lake_canada_endemism = left_join(water, lake_endemism, by="HYDROUID")
+
+# Get observation per feature
+
+crs(fw.density) <- st_crs(st_crs(canada))$wkt # a WKT string
+
+obs = terra::extract(fw.density, lake_canada_endemism)
+
+obs <-  obs %>% 
+  group_by(ID) %>% 
+  summarize(observation = sum(count, na.rm = TRUE))
+
+lake_canada_endemism <- lake_canada_endemism %>%
+  mutate(ID := seq_len(nrow(.))) %>%
+  left_join(obs, by="ID")
+
+new_lake_final = lake_canada_endemism %>% select(c(HYDROUID, NAME, boat_count,
+                                               mean_endemism, observation))
+
+write_sf(new_lake_final, "new_fw_challenge.gpkg")
+
+
+summary(final$mean_endemism)
+quantile(final$mean_endemism, na.rm=T, seq(0.90,1))
+
+summary(final$observation)
+quantile(final$observation, na.rm=T, seq(0.9,1))
+
+final$priority = NA
+final$priority[final$mean_endemism >=  0.3549 & final$observation <= 5] <- 1
+final$priority[final$mean_endemism >=  0.3549 & final$observation > 5] <- 2
+final$priority[final$mean_endemism <  0.3549 & final$observation <= 5] <-3
+final$priority[final$mean_endemism <  0.3549 & final$observation > 5] <- 4
+final$priority = as.factor(final$priority)
+levels(final$priority)
+
+final = final %>% filter(!is.na(Priority))
+final =final %>% select(c(NAME, boat_count, geom, priority)) %>%
+  rename('Boat Access' = boat_count, 'Name' = NAME, 'Priority' = priority) 
+final <- st_transform(final, crs="EPSG:4326")
+st_write(final, "new_water2.geojson")
+
+final2 = final %>% filter(!is.na(priority))
+final3 = final2 %>% select(c(NAME, boat_count, geom, priority)) %>%
+  rename('Boat Access' = boat_count, 'Name' = NAME, 'Priority' = priority) 
+
+write_sf(final3, "new_data_for_challenge_map.gpkg")
+
+final3 = read_sf("new_data_for_challenge_map.gpkg")
+
+final3 <- st_transform(final3, crs="EPSG:4326")
+
+st_write(final3, "new_water.geojson")
+
+
+```
+
+## Results
+
+Plots Below:
+1) Priority map after Blitz the Gap
+2) Comparison of priority areas pre and post BtG
+```{r Results, echo = FALSE}
+
+pal = c("#D36135", "#7FB069", "#277CCB")
+m=mapview(final3, 
+        col.regions = pal,
+        zcol = "Priority", 
+        lwd=0,
+        na.color = "transparent") 
+
+```
+

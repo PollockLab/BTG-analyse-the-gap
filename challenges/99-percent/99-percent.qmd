@@ -1,0 +1,161 @@
+---
+title: "Challenge: the other 99%"
+author: Leeya Nagpal 
+format: html
+date: "2025-07-08"
+toc: true
+---
+
+This analysis is based on the challenge script `99-percent.R` here: [https://github.com/CIEE-Living-Data-Project/blitz-the-gap/tree/main/02_scripts/99-percent](https://github.com/CIEE-Living-Data-Project/blitz-the-gap/tree/main/02_scripts/99-percent).
+
+This challenge was made by Lucas Eckert as part of the Living Data Project working group.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = '~/Documents/GitHub/BTG-analyse-the-gap/')
+
+library(ggplot2)
+library(dplyr)
+library(arrow)
+library(dbplyr, warn.conflicts = FALSE)
+library(duckdb)
+library(terra)
+library(mapview)
+library(sf)
+library(rmapshaper)
+library(leafpop)
+
+```
+
+## What this script does
+
+This script uses the code from the original 99% Challenge (designed by Lucas Eckert) to visualize the new priority areas post-Blitz the Gap. It additionally compares the old and new data, highlighting the areas that have changed priority taxa after the duration of Blitz the Gap.
+
+## Load Data
+```{r Data}
+
+inat_pq <- arrow::open_dataset("C:/Users/dogpa/OneDrive - McGill University/Laura's Lab_Group - inat-canada/iNat_non_sensitive_data_Jan2025.parquet")
+
+query <- inat_pq |> 
+  # Summarise number of obs per species, per species group
+  group_by(iconic_taxon_name, scientific_name) |>
+  summarize(total_obs = n()) |> 
+  # load the query into our R session
+  collect()
+
+## omit nas
+old<-na.omit(query)
+
+new <- read.csv("C:/Users/dogpa/SpeciesList/relevantSpecies/june1-18.csv")
+
+
+## counties
+counties<-terra::vect("/Users/lucaseckert/Library/CloudStorage/OneDrive-Personal/Side Projects/Blitz/counties_of_canada.gpkg")
+
+```
+
+## Analysis
+
+```{r Analysis}
+
+## inat layer
+inat_vect<-terra::vect(new, geom = c("longitude","latitude"), crs="+proj=longlat +ellps=WGS84")
+inat_vect<-terra::project(inat_vect, crs(counties))
+
+## obs
+obs_counts<-terra::extract(counties, inat_vect)
+
+country.data<-data.frame("County"=counties$CDUID)
+country.data$n.points=NA
+
+for (i in 1:nrow(country.data)){
+  c=country.data$County[i]
+  poly=counties[which(counties$CDUID==c)]
+  points<-crop(inat_vect,ext(poly))
+  country.data$n.points[i]=length(which(terra::relate(poly,points,relation="intersects")))
+  remove(c,poly,points)
+  print(i)
+}
+
+country.data<-mutate(country.data, CDUID=County)
+
+county_df<-as.data.frame(values(counties)) %>% left_join(country.data) %>% 
+  mutate(obs_density=n.points/LANDAREA) %>% select(-County)
+
+top_counties<-county_df[order(county_df$obs_density, decreasing = T),]
+top_counties$cum_area<-cumsum(top_counties$LANDAREA)/sum(top_counties$LANDAREA)
+top_counties$cum_obs<-cumsum(top_counties$n.points)/sum(top_counties$n.points)
+
+top_counties[100:111,]
+
+saveRDS(top_counties, file = "new-county-data.RDS")
+
+values(counties)<-left_join(values(counties), select(top_counties, CDUID, obs_density))
+counties$obs_density_log<-log10(counties$obs_density)
+
+counties$priority<-NA
+counties$priority[counties$obs_density>35.5]<-"low"
+counties$priority[counties$obs_density<35.5 & counties$obs_density>9.55]<-"medium"
+counties$priority[counties$obs_density<9.55]<-"high"
+counties$priority<-factor(counties$priority, levels = c("high","medium","low"))
+
+
+## COMPARE OLD AND NEW
+old_99 <- readRDS("county-data.RDS")
+
+pre_df <- as.data.frame(values(old_99)) %>%
+  select(CDUID, priority_pre = priority)
+
+post_df <- as.data.frame(values(top_counties)) %>%
+  select(CDUID, priority_post = priority)
+
+comparison <- full_join(old_99, top_counties, by = "CDUID") %>%
+  mutate(priority_changed = priority_pre != priority_post)
+
+# View changes
+changes <- comparison %>% filter(priority_changed)
+
+# Summary of changes
+table(comparison$priority_pre, comparison$priority_post, useNA = "ifany")
+
+# How many changed
+sum(comparison$priority_changed, na.rm = TRUE)
+
+```
+
+## Results
+
+Plots Below:
+1) Priority map after Blitz the Gap
+2) Comparison of priority areas pre and post BtG
+```{r Results, echo = FALSE}
+map_data<-counties
+values(map_data)<-values(map_data) %>% select(census_district=CDNAME, observations_per_km2=obs_density, priority) %>%
+  mutate(observations_per_km2=ceiling(observations_per_km2))
+
+map_data_sf<-st_as_sf(map_data)
+map_data_simp<-st_simplify(map_data_sf, dTolerance = 1000, preserveTopology = TRUE)
+map_data_simp2<-ms_simplify(map_data_simp, keep=0.05, keep_shapes = F)
+
+map99<-mapview(map_data_simp2,
+        zcol="priority",
+        col.regions=c("darkgreen","gold","darkred"),
+        layer.name="Priority",
+        label = map_data_simp2$census_district,
+        popup = popupTable(
+          st_drop_geometry(map_data_simp2)[, c("census_district", "observations_per_km2", "priority")],
+          feature.id = F,
+          row.numbers = F))
+
+
+# Reattach to current counties for mapping
+new_map <- counties
+values(new_map) <- left_join(
+  values(new_map),
+  comparison,
+  by = "CDUID"
+)
+
+mapview(counties, zcol = "priority_changed", col.regions = c("gray", "red"))
+```
+
