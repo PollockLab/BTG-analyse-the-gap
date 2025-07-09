@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.0.36">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Leeya Nagpal">
+<meta name="dcterms.date" content="2025-07-09">
+
+<title>Challenge: MayBAs</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+<script src="canadas-most-wanted_files/libs/clipboard/clipboard.min.js"></script>
+<script src="canadas-most-wanted_files/libs/quarto-html/quarto.js"></script>
+<script src="canadas-most-wanted_files/libs/quarto-html/popper.min.js"></script>
+<script src="canadas-most-wanted_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="canadas-most-wanted_files/libs/quarto-html/anchor.min.js"></script>
+<link href="canadas-most-wanted_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="canadas-most-wanted_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="canadas-most-wanted_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="canadas-most-wanted_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="canadas-most-wanted_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#what-this-script-does" id="toc-what-this-script-does" class="nav-link active" data-scroll-target="#what-this-script-does">What this script does</a></li>
+  <li><a href="#load-data" id="toc-load-data" class="nav-link" data-scroll-target="#load-data">Load Data</a></li>
+  <li><a href="#analysis" id="toc-analysis" class="nav-link" data-scroll-target="#analysis">Analysis</a></li>
+  <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Challenge: MayBAs</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Leeya Nagpal </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">July 9, 2025</p>
+    </div>
+  </div>
+    
+  </div>
+  
+
+</header>
+
+<p>This challenge was made by Eniola Olu-Ayorinde and Sarfaroz Yunusov as part of the Living Data Project working group.</p>
+<section id="what-this-script-does" class="level2">
+<h2 class="anchored" data-anchor-id="what-this-script-does">What this script does</h2>
+<p>This script shows the species that have been logged from the original most wanted list</p>
+</section>
+<section id="load-data" class="level2">
+<h2 class="anchored" data-anchor-id="load-data">Load Data</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>inat_pq <span class="ot">&lt;-</span> arrow<span class="sc">::</span><span class="fu">open_dataset</span>(<span class="st">"C:/Users/dogpa/OneDrive - McGill University/Laura's Lab_Group - inat-canada/iNat_non_sensitive_data_Jan2025.parquet"</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>query <span class="ot">&lt;-</span> inat_pq <span class="sc">|&gt;</span> </span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Summarise number of obs per species, per species group</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(iconic_taxon_name, scientific_name) <span class="sc">|&gt;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">total_obs =</span> <span class="fu">n</span>()) <span class="sc">|&gt;</span> </span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># load the query into our R session</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">collect</span>()</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="do">## omit nas</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>oldiNat<span class="ot">&lt;-</span><span class="fu">na.omit</span>(query)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>oldList <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"C:/Users/dogpa/SpeciesList/relevantSpecies/full_list_canadas_most_wanted.csv"</span>, <span class="at">sep =</span> <span class="st">";"</span>)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>oldList <span class="ot">&lt;-</span> <span class="fu">na.omit</span>(oldList)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>newSpecies <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"C:/Users/dogpa/SpeciesList/relevantSpecies/june1-18.csv"</span>) <span class="co">#change if it's parquet file</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>newSpecies <span class="ot">&lt;-</span> newSpecies <span class="sc">%&gt;%</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(iconic_taxon_name,scientific_name) <span class="sc">%&gt;%</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">total_observations =</span> <span class="fu">sum</span>(total_obs, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`summarise()` has grouped output by 'iconic_taxon_name'. You can override using
+the `.groups` argument.</code></pre>
+</div>
+</div>
+</section>
+<section id="analysis" class="level2">
+<h2 class="anchored" data-anchor-id="analysis">Analysis</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>found <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="fu">subset</span>(oldList<span class="sc">$</span>Scientific_Name, oldList<span class="sc">$</span>Scientific_Name <span class="sc">%in%</span> newSpecies<span class="sc">$</span>scientific_name))</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(found) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"scientific_name"</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>withTaxa <span class="ot">&lt;-</span> <span class="fu">left_join</span>(found, newSpecies, <span class="at">by =</span> <span class="st">"scientific_name"</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(withTaxa) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"scientific_name"</span>, <span class="st">"iconic_taxon_name"</span>, <span class="st">"new_observations"</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>withOld <span class="ot">&lt;-</span> <span class="fu">left_join</span>(withTaxa, oldiNat, <span class="at">relationship =</span> <span class="st">"many-to-many"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Joining with `by = join_by(scientific_name, iconic_taxon_name)`</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>obs100 <span class="ot">&lt;-</span> <span class="fu">subset</span>(withOld, (withOld<span class="sc">$</span>total_obs <span class="sc">&lt;</span> <span class="dv">100</span>) <span class="sc">&amp;</span> ((withOld<span class="sc">$</span>total_obs <span class="sc">+</span> withOld<span class="sc">$</span>new_observations) <span class="sc">&gt;</span> <span class="dv">100</span>))</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>obs100<span class="ot">&lt;-</span> obs100[,<span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="results" class="level2">
+<h2 class="anchored" data-anchor-id="results">Results</h2>
+<p>Plots Below: 1) Priority map after Blitz the Gap 2) Comparison of priority areas pre and post BtG</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>                    scientific_name iconic_taxon_name new_observations
+1            Acanthocinus obsoletus           Insecta                1
+2                  Acer saccharinum           Plantae              112
+3              Achillea millefolium           Plantae              672
+4              Acipenser fulvescens    Actinopterygii                2
+5              Acipenser oxyrinchus    Actinopterygii                2
+6           Acipenser transmontanus    Actinopterygii                2
+7                 Acorus americanus           Plantae                6
+8                    Adelges tsugae           Insecta               15
+9               Adenocaulon bicolor           Plantae               64
+10                 Adiantum pedatum           Plantae               93
+11              Adoxa moschatellina           Plantae                2
+12        Aechmophorus occidentalis              Aves                9
+13                Aegolius acadicus              Aves                1
+14                  Aesculus glabra           Plantae               10
+15                Agaricus augustus             Fungi                8
+16             Agastache nepetoides           Plantae                6
+17      Agastache scrophulariifolia           Plantae                1
+18              Agelaius phoeniceus              Aves              945
+19              Ageratina altissima           Plantae               27
+20                  Aglais milberti           Insecta               64
+21              Agrilus planipennis           Insecta               26
+22            Agrimonia gryposepala           Plantae               28
+23                       Alca torda              Aves               69
+24                      Alces alces          Mammalia              217
+25             Alectoria ochroleuca             Fungi                2
+26                 Aleuria aurantia             Fungi                2
+27                 Alisma gramineum           Plantae                3
+28               Alisma subcordatum           Plantae                6
+29                  Alisma triviale           Plantae               27
+30                 Allium canadense           Plantae                4
+31             Allium schoenoprasum           Plantae               84
+32            Allogona townsendiana          Mollusca                3
+33              Alopecurus aequalis           Plantae                7
+34              Amanita bisporigera             Fungi                1
+35       Amauropelta noveboracensis           Plantae               72
+36            Ambrosia acanthicarpa           Plantae                1
+37              Ambystoma mavortium          Amphibia                3
+38            Amelanchier sanguinea           Plantae                2
+39              Amelanchier spicata           Plantae                1
+40            Ammodramus savannarum              Aves               19
+41              Ammospiza leconteii              Aves                3
+42                Amorpha canescens           Plantae                4
+43                Amorpha fruticosa           Plantae               20
+44              Amphidium mougeotii           Plantae                2
+45            Amylocystis lapponica             Fungi                1
+46              Anaptychia crinalis             Fungi                3
+47             Anaptychia palmulata             Fungi               11
+48                       Anas acuta              Aves               14
+49                  Anaxyrus boreas          Amphibia               99
+50                Anaxyrus cognatus          Amphibia                1
+51                 Anaxyrus fowleri          Amphibia               13
+52           Ancistrocerus spinolae           Insecta                2
+53                 Andreaea nivalis           Plantae                1
+54               Andreaea rupestris           Plantae               12
+55                  Aneides vagrans          Amphibia                1
+56                Anelaphus pumilus           Insecta                1
+57           Anemonastrum canadense           Plantae             1072
+58           Anemonastrum sibiricum           Plantae                1
+59                Anemone multifida           Plantae              206
+60               Anemone parviflora           Plantae               78
+61               Anemone virginiana           Plantae              102
+62                Anguilla rostrata    Actinopterygii                8
+63               Anostirus vernalis           Insecta                1
+64                                                                4938
+65          Antennaria anaphaloides           Plantae               30
+66             Antennaria corymbosa           Plantae                1
+67           Antennaria flagellaris           Plantae                3
+68            Antennaria luzuloides           Plantae                1
+69           Antennaria microphylla           Plantae               10
+70              Antennaria parlinii           Plantae               10
+71            Antennaria parvifolia           Plantae               64
+72                 Antennaria rosea           Plantae              109
+73                 Anthus spragueii              Aves                3
+74              Antigone canadensis              Aves               99
+75            Antrostomus vociferus              Aves               41
+76                Apalone spinifera          Reptilia               23
+77                  Apios americana           Plantae                8
+78                Aplectrum hyemale           Plantae                2
+79               Appalachina sayana          Mollusca                2
+80                Aquila chrysaetos              Aves               10
+81                Aquilegia jonesii           Plantae                1
+82               Arabidopsis lyrata           Plantae               25
+83            Arceuthobium pusillum           Plantae                2
+84             Archilochus colubris              Aves              132
+85            Arctoparmelia incurva             Fungi                1
+86               Arenaria interpres              Aves               27
+87                 Arethusa bulbosa           Plantae               64
+88                       Argia emma           Insecta               11
+89                     Argia vivida           Insecta                3
+90                 Argynnis hydaspe           Insecta               17
+91                  Argynnis zerene           Insecta               11
+92              Arisaema dracontium           Plantae                2
+93              Arisaema triphyllum           Plantae              357
+94                 Armeria maritima           Plantae               19
+95              Armillaria nabsnona             Fungi                2
+96                Arnica cordifolia           Plantae              209
+97                 Arnica griscomii           Plantae                1
+98              Arnica lonchophylla           Plantae                2
+99                    Arnica parryi           Plantae                2
+100        Arnoglossum plantagineum           Plantae                4
+101              Artemisia borealis           Plantae                5
+102            Artemisia campestris           Plantae               66
+103                  Artemisia cana           Plantae               38
+104           Artemisia dracunculus           Plantae               17
+105               Artemisia tilesii           Plantae                6
+106                 Aruncus dioicus           Plantae              174
+107                  Ascaphus truei          Amphibia                3
+108              Asclepias exaltata           Plantae                7
+109          Asclepias purpurascens           Plantae                1
+110           Asclepias quadrifolia           Plantae               11
+111               Asclepias syriaca           Plantae              540
+112          Asclepias verticillata           Plantae                1
+113           Asclepias viridiflora           Plantae                3
+114                   Asio flammeus              Aves                8
+115                       Asio otus              Aves                3
+116         Asplenium scolopendrium           Plantae                3
+117           Asplenium trichomanes           Plantae               71
+118                Asplenium viride           Plantae               40
+119                   Aster alpinus           Plantae               13
+120           Astragalus americanus           Plantae                6
+121            Astragalus australis           Plantae               24
+122              Astragalus bodinii           Plantae                2
+123         Astragalus crassicarpus           Plantae                5
+124           Astragalus drummondii           Plantae               16
+125          Astragalus gilviflorus           Plantae               17
+126           Astragalus lotiflorus           Plantae                3
+127            Astragalus neglectus           Plantae                2
+128            Astragalus robbinsii           Plantae                5
+129              Athene cunicularia              Aves                2
+130        Atheniella aurantiidisca             Fungi                3
+131             Athyrium americanum           Plantae                1
+132             Atrytonopsis hianna           Insecta                7
+133          Aulacomnium androgynum           Plantae                3
+134                  Aythya affinis              Aves              120
+135                Aythya americana              Aves               68
+136                   Aythya marila              Aves               13
+137              Aythya valisineria              Aves               13
+138           Baccharis halimifolia           Plantae                1
+139                 Baeomyces rufus             Fungi                4
+140           Balaenoptera physalus          Mammalia                5
+141          Balsamorhiza deltoidea           Plantae                1
+142             Barbarea orthoceras           Plantae               29
+143     Barbilophozia lycopodioides           Plantae                5
+144                 Barnea truncata          Mollusca                1
+145            Bartramia longicauda              Aves               16
+146            Bartramia pomiformis           Plantae               22
+147              Basiaeschna janata           Insecta               53
+148                 Berberis repens           Plantae               11
+149               Betula glandulosa           Plantae               26
+150                    Betula lenta           Plantae                1
+151                Betula michauxii           Plantae               18
+152               Bidens amplissima           Plantae                5
+153                  Bidens vulgata           Plantae                1
+154                     Bison bison          Mammalia               14
+155               Blephilia ciliata           Plantae                1
+156               Boechera grahamii           Plantae               34
+157       Bolboschoenus fluviatilis           Plantae                5
+158          Bolboschoenus robustus           Plantae                1
+159               Boloria chariclea           Insecta                1
+160             Bombus occidentalis           Insecta               17
+161            Bombus pensylvanicus           Insecta               13
+162                Bombus terricola           Insecta               30
+163             Bombycilla cedrorum              Aves              585
+164            Borodinia canadensis           Plantae                1
+165                 Botaurus exilis              Aves               12
+166           Botrychium crenulatum           Plantae                1
+167          Botrychium lanceolatum           Plantae                1
+168              Botrychium lunaria           Plantae                2
+169     Botrychium matricariifolium           Plantae                7
+170           Botrychium minganense           Plantae                3
+171             Botrychium pallidum           Plantae                2
+172              Botrychium simplex           Plantae                2
+173                  Boyeria vinosa           Insecta                1
+174          Brachythecium albicans           Plantae                6
+175          Brachythecium frigidum           Plantae                3
+176         Brachythecium rutabulum           Plantae                7
+177        Brachythecium salebrosum           Plantae                2
+178                 Branta bernicla              Aves                7
+179              Brasenia schreberi           Plantae               32
+180                   Braya humilis           Plantae                5
+181                Bromus pubescens           Plantae                1
+182        Bryoandersonia illecebra           Plantae                1
+183                 Bryoria bicolor             Fungi                6
+184                 Bubo scandiacus              Aves                2
+185               Bucephala albeola              Aves               28
+186             Bucephala islandica              Aves               16
+187               Buteo jamaicensis              Aves              151
+188                   Buteo lagopus              Aves                2
+189                  Buteo lineatus              Aves               16
+190                   Buteo regalis              Aves                3
+191                 Buteo swainsoni              Aves               51
+192             Butorides virescens              Aves               84
+193         Cacoecimorpha pronubana           Insecta                1
+194         Calamagrostis rubescens           Plantae                5
+195         Calamospiza melanocorys              Aves                4
+196           Calbovista subsculpta             Fungi                6
+197               Calcarius ornatus              Aves                2
+198                 Calicium viride             Fungi                3
+199                   Calidris alba              Aves               21
+200                Calidris bairdii              Aves                1
+201                Calidris canutus              Aves                3
+202            Calidris fuscicollis              Aves               19
+203                  Calidris mauri              Aves                1
+204              Calidris melanotos              Aves                3
+205              Calidris minutilla              Aves                7
+206                Calidris pusilla              Aves               56
+207     Callitriche hermaphroditica           Plantae                2
+208        Callitriche heterophylla           Plantae                2
+209              Callophrys gryneus           Insecta               91
+210              Callophrys henrici           Insecta                4
+211             Callophrys johnsoni           Insecta                1
+212        Callophrys lanoraieensis           Insecta                3
+213               Callophrys niphon           Insecta               82
+214               Callophrys polios           Insecta               12
+215             Calochortus lyallii           Plantae                3
+216                Caltha palustris           Plantae              225
+217                 Calypso bulbosa           Plantae               46
+218                 Cambarunio iris          Mollusca                3
+219             Camissonia contorta           Plantae                1
+220           Campanula intercedens           Plantae                4
+221   Campyliadelphus chrysophyllus           Plantae                4
+222          Campylophyllum halleri           Plantae                3
+223      Candelariella efflorescens             Fungi                6
+224                    Canis lycaon          Mammalia                3
+225            Capitotricha bicolor             Fungi                2
+226          Cardamine bellidifolia           Plantae                1
+227           Cardamine concatenata           Plantae                2
+228              Cardamine diphylla           Plantae               42
+229                Cardamine maxima           Plantae                4
+230            Cardamine parviflora           Plantae                4
+231           Cardellina canadensis              Aves               42
+232           Cardinalis cardinalis              Aves              208
+233               Carex alopecoidea           Plantae                7
+234                 Carex annectens           Plantae                1
+235                     Carex arcta           Plantae                4
+236                   Carex arctata           Plantae               64
+237              Carex athrostachya           Plantae                3
+238                     Carex aurea           Plantae               45
+239                    Carex backii           Plantae                6
+240                 Carex bigelowii           Plantae                1
+241                    Carex blanda           Plantae               51
+242                 Carex buxbaumii           Plantae               20
+243              Carex chordorrhiza           Plantae                8
+244                  Carex communis           Plantae               53
+245                    Carex comosa           Plantae               15
+246              Carex cordillerana           Plantae                1
+247                    Carex crawei           Plantae               15
+248                   Carex crinita           Plantae               84
+249               Carex cryptolepis           Plantae                4
+250                  Carex cumulata           Plantae                1
+251                 Carex digitalis           Plantae                6
+252                Carex duriuscula           Plantae               17
+253                  Carex echinata           Plantae               49
+254                     Carex flava           Plantae               60
+255                   Carex garberi           Plantae               13
+256                Carex granularis           Plantae               62
+257                    Carex grisea           Plantae               23
+258                  Carex haydenii           Plantae                4
+259                    Carex hoodii           Plantae                8
+260              Carex houghtoniana           Plantae               21
+261                    Carex illota           Plantae                1
+262                     Carex inops           Plantae                4
+263               Carex intumescens           Plantae              183
+264                 Carex kelloggii           Plantae                8
+265                 Carex lacustris           Plantae               62
+266                Carex lasiocarpa           Plantae               24
+267                 Carex laxiflora           Plantae               10
+268               Carex leptonervia           Plantae               46
+269                    Carex livida           Plantae               15
+270                    Carex lurida           Plantae               17
+271                    Carex meadii           Plantae                1
+272               Carex michauxiana           Plantae                1
+273              Carex microglochin           Plantae                1
+274                Carex microptera           Plantae                3
+275                   Carex molesta           Plantae               13
+276            Carex nigromarginata           Plantae                2
+277                  Carex normalis           Plantae                5
+278               Carex ormostachya           Plantae                1
+279                  Carex paleacea           Plantae                5
+280                Carex pauciflora           Plantae               13
+281               Carex pedunculata           Plantae               14
+282              Carex pensylvanica           Plantae               18
+283               Carex plantaginea           Plantae               27
+284                   Carex prairea           Plantae                5
+285                  Carex projecta           Plantae               12
+286                   Carex radiata           Plantae               43
+287                Carex raynoldsii           Plantae                2
+288                     Carex recta           Plantae                1
+289                  Carex retrorsa           Plantae               20
+290                     Carex rosea           Plantae               71
+291                  Carex rostrata           Plantae                1
+292                  Carex sabulosa           Plantae                3
+293                 Carex saxatilis           Plantae                1
+294                Carex scirpoidea           Plantae               14
+295                 Carex shortiana           Plantae                2
+296                  Carex sterilis           Plantae               14
+297                   Carex stricta           Plantae               53
+298                Carex tenuiflora           Plantae                1
+299                    Carex tincta           Plantae                1
+300                     Carex tonsa           Plantae                8
+301                 Carex vesicaria           Plantae                6
+302                 Carex virescens           Plantae                1
+303                  Carex viridula           Plantae               37
+304               Carex vulpinoidea           Plantae               45
+305                 Carex wiegandii           Plantae                5
+306                 Carex xerantica           Plantae                2
+307            Cassiope mertensiana           Plantae               10
+308                Castanea dentata           Plantae                8
+309             Castilleja coccinea           Plantae               83
+310            Castilleja levisecta           Plantae                2
+311              Castilleja miniata           Plantae              143
+312           Castilleja parviflora           Plantae                1
+313         Castilleja sessiliflora           Plantae                1
+314            Castilleja victoriae           Plantae                5
+315              Catabrosa aquatica           Plantae                1
+316              Catharus bicknelli              Aves                4
+317                Catharus minimus              Aves                3
+318                Catocala neogama           Insecta                1
+319              Celastrus scandens           Plantae               26
+320                Celithemis elisa           Insecta               71
+321             Celtis occidentalis           Plantae               80
+322               Celtis tenuifolia           Plantae               15
+323               Centronyx bairdii              Aves                1
+324         Cephalanthera austiniae           Plantae               65
+325         Cephaloziella spinigera           Plantae                2
+326                  Cepphus grylle              Aves               25
+327               Cerastium alpinum           Plantae                2
+328          Cerastium beeringianum           Plantae                3
+329            Cerioporus squamosus             Fungi              298
+330              Cetorhinus maximus          Animalia                1
+331               Cetraria arenaria             Fungi                4
+332             Cetraria ericetorum             Fungi                1
+333             Cetrelia olivetorum             Fungi                2
+334               Chaetura pelagica              Aves               37
+335              Charadrius melodus              Aves               32
+336         Charadrius semipalmatus              Aves               29
+337                  Charina bottae          Reptilia                6
+338             Chelydra serpentina          Reptilia             1170
+339         Chiloscyphus polyanthos           Plantae                2
+340             Chimaphila maculata           Plantae                2
+341            Chimaphila umbellata           Plantae               95
+342                Chlidonias niger              Aves               51
+343                Chlosyne gorgone           Insecta               21
+344                Chordeiles minor              Aves               55
+345      Chortophaga viridifasciata           Insecta               82
+346          Chromosera cyanophylla             Fungi                1
+347                 Chrysemys picta          Reptilia              593
+348          Chrysosplenium iowense           Plantae                5
+349               Cicindela formosa           Insecta               31
+350           Cicindela longilabris           Insecta               46
+351            Cicindela nebraskana           Insecta                8
+352              Cicindela patruela           Insecta                7
+353           Cicindela scutellaris           Insecta               11
+354         Cicindela tranquebarica           Insecta               53
+355                 Cicuta maculata           Plantae               40
+356              Cirsium drummondii           Plantae                6
+357               Cirsium flodmanii           Plantae                4
+358                Cirsium foliosum           Plantae                2
+359                Cirsium pitcheri           Plantae                3
+360                 Cirsium pumilum           Plantae                3
+361               Cirsium undulatum           Plantae               52
+362           Cistothorus palustris              Aves               27
+363           Cladonia bellidiflora             Fungi               13
+364               Cladonia botrytes             Fungi                2
+365               Cladonia deformis             Fungi                7
+366                Cladonia furcata             Fungi                5
+367                 Cladonia maxima             Fungi               10
+368            Cladonia ochrochlora             Fungi                3
+369             Cladonia portentosa             Fungi               16
+370           Cladonia scabriuscula             Fungi                9
+371               Cladonia squamosa             Fungi               16
+372             Cladonia strepsilis             Fungi                1
+373             Cladonia subcariosa             Fungi                2
+374              Cladonia subtenuis             Fungi                3
+375             Cladonia sulphurina             Fungi                4
+376            Clastoptera achatina           Insecta                1
+377           Claytonia caroliniana           Plantae                9
+378         Clematis ligusticifolia           Plantae               22
+379           Clematis occidentalis           Plantae              133
+380               Clethra alnifolia           Plantae                1
+381            Climacium americanum           Plantae                7
+382      Climacodon septentrionalis             Fungi                3
+383           Clinostomus elongatus    Actinopterygii                1
+384             Clitocybe glacialis             Fungi                2
+385          Coccinella novemnotata           Insecta                1
+386    Coccinella transversoguttata           Insecta               19
+387           Coccocarpia palmicola             Fungi                1
+388      Coccothraustes vespertinus              Aves               20
+389         Cochlearia groenlandica           Plantae               22
+390         Coenagrion interrogatum           Insecta                1
+391          Coenonympha california           Insecta              430
+392                Colias eurytheme           Insecta                9
+393             Collema furfuraceum             Fungi                2
+394              Collema nigrescens             Fungi                1
+395            Collinsia parviflora           Plantae               26
+396            Coltricia cinnamomea             Fungi                1
+397             Coluber constrictor          Reptilia                5
+398              Comandra umbellata           Plantae              198
+399           Conioselinum chinense           Plantae                9
+400         Conocephalum salebrosum           Plantae               31
+401            Conopholis americana           Plantae               64
+402           Conostomum tetragonum           Plantae                2
+403                Contopus cooperi              Aves               57
+404                 Contopus virens              Aves              110
+405        Coprinellus disseminatus             Fungi                4
+406         Coprinellus flocculosus             Fungi                3
+407           Coprinellus impatiens             Fungi                1
+408        Corallorhiza mertensiana           Plantae              129
+409            Corallorhiza striata           Plantae              144
+410          Coregonus clupeaformis    Actinopterygii                2
+411                 Corema conradii           Plantae                1
+412             Coreopsis tripteris           Plantae                3
+413                  Cornu aspersum          Mollusca                7
+414                  Cornus florida           Plantae                2
+415                  Cornus suecica           Plantae               15
+416           Cornus unalaschkensis           Plantae              201
+417               Corvus ossifragus              Aves                1
+418            Corythucha juglandis           Insecta                7
+419              Cotylidia diaphana             Fungi                1
+420               Couesius plumbeus    Actinopterygii               19
+421           Crataegus macracantha           Plantae               19
+422       Crataegus rivulopugnensis           Plantae                1
+423          Crocanthemum canadense           Plantae                6
+424               Crotalus oreganus          Reptilia                5
+425                Crotalus viridis          Reptilia                3
+426         Cryptotaenia canadensis           Plantae               55
+427                 Cupido comyntas           Insecta               22
+428                Cuscuta gronovii           Plantae                1
+429              Cyclopterus lumpus    Actinopterygii                1
+430           Cydalima perspectalis           Insecta               32
+431                 Cydia pomonella           Insecta               16
+432               Cygnus buccinator              Aves              128
+433             Cynodontium jenneri           Plantae                5
+434            Cynomys ludovicianus          Mammalia                4
+435           Cypripedium arietinum           Plantae               41
+436            Cypripedium candidum           Plantae               19
+437            Cypripedium montanum           Plantae               58
+438         Cypripedium parviflorum           Plantae              665
+439             Cypripedium reginae           Plantae              101
+440               Cypseloides niger              Aves                2
+441             Cystopteris montana           Plantae                1
+442              Cystopteris tenuis           Plantae               13
+443       Daktulosphaira vitifoliae           Insecta                1
+444                  Dalea purpurea           Plantae               12
+445                Danaus plexippus           Insecta              106
+446             Danthonia compressa           Plantae                2
+447            Danthonia intermedia           Plantae                3
+448                Danthonia parryi           Plantae                2
+449               Danthonia spicata           Plantae               14
+450             Dasiphora fruticosa           Plantae              210
+451           Decodon verticillatus           Plantae                7
+452           Delphinapterus leucas          Mammalia                7
+453        Dendrolycopodium hickeyi           Plantae               13
+454          Dermatocarpon miniatum             Fungi                3
+455            Dermochelys coriacea          Reptilia                1
+456           Deschampsia cespitosa           Plantae               19
+457          Descurainia sophioides           Plantae                4
+458             Desmognathus fuscus          Amphibia                7
+459        Desmognathus ochrophaeus          Amphibia                1
+460             Diabrotica cristata           Insecta                1
+461             Diapensia lapponica           Plantae               50
+462             Dicentra cucullaria           Plantae                3
+463      Dichanthelium oligosanthes           Plantae                5
+464      Dichanthelium xanthophysum           Plantae                2
+465        Dicranodontium denudatum           Plantae               13
+466                  Dicranum majus           Plantae               13
+467                  Dielis pilipes           Insecta                1
+468              Diervilla lonicera           Plantae              200
+469           Diphasiastrum alpinum           Plantae                1
+470         Diphasiastrum sitchense           Plantae               13
+471                 Dipodomys ordii          Mammalia                1
+472           Dolichonyx oryzivorus              Aves              122
+473                 Draba arabisans           Plantae                2
+474                     Draba aurea           Plantae               19
+475                      Draba cana           Plantae                8
+476                  Draba glabella           Plantae                1
+477                  Draba nemorosa           Plantae                8
+478                Draba yukonensis           Plantae                4
+479                 Drosera anglica           Plantae               31
+480                Drosera linearis           Plantae               12
+481                Dryas drummondii           Plantae               60
+482              Dryas integrifolia           Plantae               33
+483              Dryocopus pileatus              Aves              194
+484          Dryopteris clintoniana           Plantae               16
+485              Dryopteris expansa           Plantae              102
+486            Dryopteris filix-mas           Plantae               14
+487            Dryopteris goldieana           Plantae                6
+488           Dryopteris marginalis           Plantae              108
+489          Dumetella carolinensis              Aves              258
+490                   Egretta thula              Aves                2
+491            Eleocharis compressa           Plantae               19
+492            Eleocharis elliptica           Plantae                1
+493          Eleocharis erythropoda           Plantae                3
+494         Eleocharis macrostachya           Plantae                5
+495               Eleocharis obtusa           Plantae                7
+496         Eleocharis quinqueflora           Plantae                2
+497               Eleodes extricata           Insecta                2
+498             Elliptio complanata          Mollusca               40
+499                Elodea nuttallii           Plantae                1
+500                  Elymus glaucus           Plantae               20
+501                  Elymus hystrix           Plantae                1
+502              Empidonax traillii              Aves              125
+503             Empidonax virescens              Aves                5
+504            Emydoidea blandingii          Reptilia              313
+505                  Enallagma anna           Insecta                1
+506                Enallagma ebrium           Insecta               73
+507                Enallagma hageni           Insecta               16
+508               Encalypta procera           Plantae                8
+509             Endogone pisiformis             Fungi                1
+510                  Enhydra lutris          Mammalia               10
+511                Epiaeschna heros           Insecta                6
+512             Epilobium coloratum           Plantae                3
+513           Epilobium densiflorum           Plantae                2
+514             Epilobium hallianum           Plantae                1
+515              Epilobium mirabile           Plantae                2
+516               Equisetum hyemale           Plantae               72
+517              Equisetum palustre           Plantae                5
+518            Equisetum scirpoides           Plantae               31
+519              Erastria coloraria           Insecta                1
+520            Eremophila alpestris              Aves                4
+521                  Erigeron acris           Plantae                1
+522            Erigeron caespitosus           Plantae               41
+523             Erigeron compositus           Plantae               74
+524              Erigeron divergens           Plantae               12
+525              Erigeron glabellus           Plantae               74
+526                Erigeron humilis           Plantae                1
+527          Erigeron hyssopifolius           Plantae               10
+528         Erigeron philadelphicus           Plantae              701
+529              Erigeron radicatus           Plantae               11
+530            Eriocaulon aquaticum           Plantae                7
+531                Eriogonum flavum           Plantae               65
+532              Eriophorum gracile           Plantae               10
+533                     Erora laeta           Insecta                2
+534                   Erynnis brizo           Insecta                1
+535               Erynnis martialis           Insecta               24
+536                 Erynnis persius           Insecta               63
+537             Erysimum coarctatum           Plantae                4
+538             Erythranthe breweri           Plantae                1
+539            Erythranthe moschata           Plantae                1
+540          Erythronium americanum           Plantae               42
+541           Eschrichtius robustus          Mammalia                2
+542              Escobaria vivipara           Plantae               35
+543                 Euchloe olympia           Insecta                5
+544              Eumetopias jubatus          Mammalia                5
+545          Euodynerus foraminatus           Insecta               16
+546              Euphagus carolinus              Aves                9
+547         Euphorbia polygonifolia           Plantae                1
+548               Euphydryas anicia           Insecta              207
+549               Euphydryas editha           Insecta                9
+550                 Euphyes vestris           Insecta                1
+551               Eurybia conspicua           Plantae               50
+552             Eurybia macrophylla           Plantae              168
+553                  Eurybia radula           Plantae                1
+554             Eutrema salsugineum           Plantae                1
+555                 Falco mexicanus              Aves                5
+556                Falco peregrinus              Aves               20
+557                Falco sparverius              Aves               44
+558             Feniseca tarquinius           Insecta               25
+559              Festuca campestris           Plantae               32
+560                  Festuca hallii           Plantae               27
+561         Festuca subverticillata           Plantae               13
+562              Fissidens fontanus           Plantae                1
+563            Fissidens taxifolius           Plantae                8
+564         Flavocetraria cucullata             Fungi                6
+565           Flavocetraria nivalis             Fungi                9
+566     Flavoparmelia baltimorensis             Fungi                1
+567         Flavopunctelia soredica             Fungi                3
+568         Fontinalis antipyretica           Plantae                6
+569            Fontinalis hypnoides           Plantae                2
+570          Fontinalis neomexicana           Plantae                1
+571           Frasera caroliniensis           Plantae                3
+572              Fratercula arctica              Aves               54
+573                  Fraxinus nigra           Plantae              291
+574          Fraxinus pennsylvanica           Plantae              250
+575               Fraxinus profunda           Plantae                3
+576          Fraxinus quadrangulata           Plantae                4
+577                Fulica americana              Aves              148
+578              Fundulus diaphanus    Actinopterygii               24
+579       Fuscopannaria leucosticta             Fungi                2
+580                    Gadus morhua    Actinopterygii                4
+581            Galearis spectabilis           Plantae               13
+582                  Galium aparine           Plantae              139
+583                 Galium bifolium           Plantae                3
+584                  Galium boreale           Plantae              357
+585                  Galium obtusum           Plantae                4
+586               Gallinula galeata              Aves               32
+587          Gasterosteus aculeatus    Actinopterygii               29
+588           Gaultheria procumbens           Plantae              101
+589                     Gavia immer              Aves              192
+590                  Gavia stellata              Aves               12
+591                Gentiana affinis           Plantae                1
+592            Gentianella amarella           Plantae                5
+593         Geothlypis philadelphia              Aves               37
+594             Geranium bicknellii           Plantae               82
+595           Geranium carolinianum           Plantae                2
+596              Geranium maculatum           Plantae              105
+597                     Geum peckii           Plantae                1
+598                Glaucidium gnoma              Aves                1
+599             Glaucopsyche piasus           Insecta               14
+600             Glyceria canadensis           Plantae                1
+601                 Glyceria obtusa           Plantae                1
+602         Gomphaeschna furcillata           Insecta               69
+603           Gomphurus ventricosus           Insecta                1
+604           Goodyera oblongifolia           Plantae              115
+605              Goodyera pubescens           Plantae                7
+606           Graptemys geographica          Reptilia              331
+607                  Gratiola aurea           Plantae                1
+608               Grimmia laevigata           Plantae                3
+609               Grimmia pulvinata           Plantae                2
+610                Grimmia ramondii           Plantae                1
+611                Grimmia torquata           Plantae                1
+612                  Grus americana              Aves                1
+613            Guepiniopsis buccina             Fungi                2
+614                       Gulo gulo          Mammalia                1
+615      Gyalolechia flavorubescens             Fungi                1
+616        Gymnocarpium robertianum           Plantae                1
+617             Gymnocladus dioicus           Plantae                8
+618            Gymnomitrion alpinum           Plantae               12
+619            Gymnomitrion obtusum           Plantae               16
+620      Gyrinophilus porphyriticus          Amphibia                2
+621                Hackelia deflexa           Plantae               38
+622          Haliotis kamtschatkana          Mollusca               23
+623            Hamamelis virginiana           Plantae               63
+624            Hapalopilus rutilans             Fungi                1
+625                  Haploa reversa           Insecta                1
+626                 Hedeoma hispida           Plantae                4
+627               Hedysarum boreale           Plantae              143
+628       Heliotropium curassavicum           Plantae                1
+629          Helmitheros vermivorum              Aves                1
+630          Hemidactylium scutatum          Amphibia                8
+631       Hemileccinum subglabripes             Fungi                1
+632           Hemileuca eglanterina           Insecta               16
+633                  Hemileuca hera           Insecta               11
+634    Hemistropharia albocrenulata             Fungi                1
+635            Henricus edwardsiana           Insecta                3
+636               Hesperia colorado           Insecta                1
+637             Hesperostipa comata           Plantae               16
+638          Hesperostipa curtiseta           Plantae                2
+639             Hetaerina americana           Insecta                6
+640        Heterocladium procurrens           Plantae                2
+641           Heterodermia neglecta             Fungi                3
+642           Heterodermia speciosa             Fungi                4
+643           Heterodon platirhinos          Reptilia               18
+644             Heterotheca villosa           Plantae               78
+645                 Heuchera glabra           Plantae                4
+646             Heuchera parvifolia           Plantae                6
+647             Hibiscus moscheutos           Plantae                3
+648            Hieracium albiflorum           Plantae               51
+649               Hieracium venosum           Plantae                1
+650            Himantopus mexicanus              Aves               22
+651     Hippodamia tredecimpunctata           Insecta               19
+652                 Hirundo rustica              Aves              212
+653       Histrionicus histrionicus              Aves               15
+654          Homalia trichomanoides           Plantae                2
+655        Homalothecium fulgescens           Plantae               13
+656          Hordeum brachyantherum           Plantae                8
+657                Hosackia pinnata           Plantae               12
+658            Houstonia longifolia           Plantae               41
+659             Hudsonius hudsonius    Actinopterygii                6
+660                 Humulus lupulus           Plantae               13
+661          Huperzia continentalis           Plantae                4
+662            Hydrastis canadensis           Plantae                1
+663           Hydrobates leucorhous              Aves                6
+664            Hydrocoloeus minutus              Aves                2
+665           Hydrocotyle americana           Plantae               14
+666          Hydrophyllum canadense           Plantae               10
+667              Hydroprogne caspia              Aves               26
+668            Hygrophorus eburneus             Fungi                1
+669            Hylocichla mustelina              Aves               34
+670               Hyophila involuta           Plantae                3
+671             Hypena madefactalis           Insecta               20
+672            Hypericum ellipticum           Plantae                4
+673               Hypericum mutilum           Plantae                1
+674              Hypericum scouleri           Plantae                2
+675        Hyperphyscia adglutinata             Fungi                1
+676              Hypogymnia krogiae             Fungi                2
+677             Hypogymnia tubulosa             Fungi                6
+678              Hypogymnia vittata             Fungi                1
+679            Hypotrachyna sinuosa             Fungi               10
+680              Icaricia saepiolus           Insecta              136
+681             Ichthyomyzon fossor          Animalia                1
+682                  Icteria virens              Aves               10
+683                 Icterus galbula              Aves              192
+684               Iliamna rivularis           Plantae                6
+685             Imbribryum miniatum           Plantae                1
+686              Inocutis dryophila             Fungi                1
+687                  Iris lacustris           Plantae               20
+688              Iris missouriensis           Plantae                1
+689                 Iris versicolor           Plantae              593
+690           Ischnoderma resinosum             Fungi                4
+691                 Ischnura damula           Insecta                7
+692             Ischnura kellicotti           Insecta                1
+693            Isoetes occidentalis           Plantae                1
+694               Isurus oxyrinchus          Animalia                1
+695                 Juglans cinerea           Plantae               80
+696               Juncus canadensis           Plantae                4
+697                Juncus militaris           Plantae                3
+698         Jungermannia atrovirens           Plantae                1
+699          Kaernefeltia merrillii             Fungi                1
+700              Kalmia microphylla           Plantae               71
+701               Kalmia procumbens           Plantae               62
+702        Krascheninnikovia lanata           Plantae               14
+703                Krigia virginica           Plantae                2
+704               Kurzia pauciflora           Plantae                2
+705                 Lactuca biennis           Plantae               42
+706      Lagenorhynchus albirostris          Mammalia                3
+707                 Lagopus lagopus              Aves               20
+708            Lampetra richardsoni          Animalia                1
+709         Lampropeltis triangulum          Reptilia              186
+710              Lampsilis fasciola          Mollusca                5
+711                 Lanius borealis              Aves                1
+712             Lanius ludovicianus              Aves               13
+713             Laportea canadensis           Plantae               78
+714              Larus californicus              Aves               30
+715              Larus delawarensis              Aves              210
+716               Larus glaucescens              Aves               46
+717                   Larus marinus              Aves               39
+718               Lasallia papulosa             Fungi               15
+719       Lasionycteris noctivagans          Mammalia                2
+720               Lasiurus cinereus          Mammalia                3
+721             Lathyrus littoralis           Plantae                1
+722              Lathyrus palustris           Plantae               39
+723               Lecanora rupicola             Fungi                1
+724               Lechea intermedia           Plantae                1
+725               Leersia oryzoides           Plantae                7
+726                     Lemna minor           Plantae               30
+727            Lepisosteus oculatus    Actinopterygii                5
+728               Lepomis peltastes    Actinopterygii                3
+729               Lepraria neglecta             Fungi                4
+730       Leptinotarsa decemlineata           Insecta               28
+731            Leptogium cyanescens             Fungi                7
+732            Leptogium saturninum             Fungi                1
+733                Lepus townsendii          Mammalia               69
+734                Leskea polycarpa           Plantae                3
+735              Lespedeza capitata           Plantae                8
+736                 Lestes congener           Insecta                2
+737                  Lestes eurinus           Insecta               10
+738               Lestes inaequalis           Insecta                9
+739                Letharia vulpina             Fungi               16
+740            Leucanthiza dircella           Insecta                2
+741           Leucophaeus atricilla              Aves                4
+742              Leucoraja ocellata          Animalia                8
+743            Leucorrhinia frigida           Insecta               72
+744                Lewisia rediviva           Plantae               41
+745                   Leymus mollis           Plantae               49
+746                 Liatris spicata           Plantae                5
+747             Libellula pulchella           Insecta               94
+748                Lilium canadense           Plantae                1
+749          Limenitis weidemeyerii           Insecta                1
+750             Limnodromus griseus              Aves                9
+751               Limosa haemastica              Aves               10
+752                 Lindernia dubia           Plantae                2
+753              Liparis liliifolia           Plantae                3
+754                Liparis loeselii           Plantae               43
+755            Lithobates clamitans          Amphibia              802
+756              Lithobates pipiens          Amphibia              339
+757            Lithospermum incisum           Plantae               29
+758              Lobaria pulmonaria             Fungi              112
+759               Lobelia dortmanna           Plantae                3
+760                 Lobelia spicata           Plantae                8
+761                   Lomatium cous           Plantae               14
+762             Lomatium multifidum           Plantae               24
+763                     Lon zabulon           Insecta               10
+764             Lonicera canadensis           Plantae              115
+765            Lophocolea bidentata           Plantae               11
+766           Lophodytes cucullatus              Aves               57
+767               Loxia curvirostra              Aves               24
+768              Ludwigia palustris           Plantae                9
+769                 Lupinus lepidus           Plantae                4
+770               Lupinus rivularis           Plantae                4
+771                Luzula acuminata           Plantae               22
+772           Lycopodiella inundata           Plantae               16
+773                Lymantria dispar           Insecta               74
+774          Lysimachia quadrifolia           Plantae                5
+775          Lysimachia thyrsiflora           Plantae              134
+776              Magnolia acuminata           Plantae               12
+777           Maianthemum racemosum           Plantae              633
+778                 Mannia gracilis           Plantae                1
+779                   Marah oregana           Plantae                1
+780     Margaritifera margaritifera          Mollusca                6
+781             Marsupella aquatica           Plantae                1
+782                Martes americana          Mammalia                7
+783       Matteuccia struthiopteris           Plantae              212
+784                Meesia triquetra           Plantae                1
+785           Megacollybia rodmanii             Fungi               36
+786         Megapallifera mutabilis          Mollusca                2
+787          Megaptera novaeangliae          Mammalia               26
+788           Megascops kennicottii              Aves                3
+789            Melanerpes carolinus              Aves               58
+790      Melanerpes erythrocephalus              Aves               19
+791                Melanerpes lewis              Aves               13
+792             Melanitta americana              Aves                6
+793                  Melica smithii           Plantae                1
+794           Menegazzia subsimilis             Fungi                6
+795            Menegazzia terebrata             Fungi                2
+796         Mesoptychia bantriensis           Plantae                7
+797             Metzgeria conjugata           Plantae               15
+798         Micranthes occidentalis           Plantae               23
+799            Microseris bigelovii           Plantae                1
+800           Microstegium vimineum           Plantae                7
+801                  Milium effusum           Plantae                8
+802                 Mimulus ringens           Plantae                1
+803               Mimus polyglottos              Aves               19
+804         Mirounga angustirostris          Mammalia                2
+805                 Mniotilta varia              Aves               57
+806                 Mnium thomsonii           Plantae                5
+807          Moehringia macrophylla           Plantae               19
+808             Moerckia flotoviana           Plantae                1
+809                  Molothrus ater              Aves              208
+810                Monarda punctata           Plantae                2
+811             Monotropa hypopitys           Plantae               51
+812                 Montia linearis           Plantae                1
+813               Montia parvifolia           Plantae               70
+814            Morella pensylvanica           Plantae               62
+815                Morone saxatilis    Actinopterygii               10
+816                     Morus rubra           Plantae                2
+817          Muhlenbergia cuspidata           Plantae                1
+818          Muhlenbergia glomerata           Plantae                2
+819            Musineon divaricatum           Plantae               14
+820                 Mutinus elegans             Fungi                6
+821              Myelochroa obsessa             Fungi                1
+822              Myiarchus crinitus              Aves              113
+823                  Mylia taylorii           Plantae               60
+824                Myosurus minimus           Plantae                6
+825                Myotis lucifugus          Mammalia                7
+826        Myoxocephalus thompsonii    Actinopterygii                1
+827      Myriophyllum heterophyllum           Plantae                2
+828      Myriophyllum verticillatum           Plantae                5
+829             Nannopterum auritum              Aves              235
+830                 Nardia scalaris           Plantae               13
+831                  Nardus stricta           Plantae                2
+832         Nasiaeschna pentacantha           Insecta                7
+833               Nephroma arcticum             Fungi                5
+834             Nephroma helveticum             Fungi                4
+835                 Nephroma parile             Fungi                5
+836                 Nerodia sipedon          Reptilia              112
+837            Normandina pulchella             Fungi                2
+838             Notropis bifrenatus    Actinopterygii                1
+839             Notropis photogenis    Actinopterygii                1
+840             Numenius americanus              Aves                5
+841               Numenius phaeopus              Aves               13
+842           Nycticorax nycticorax              Aves              105
+843               Nymphalis l-album           Insecta                1
+844                  Oarisma garita           Insecta                8
+845              Oclemena acuminata           Plantae               28
+846        Odontocorynus salebrosus           Insecta                6
+847               Oeciacus vicarius           Insecta                1
+848                    Oeneis jutta           Insecta               13
+849              Oenothera perennis           Plantae               20
+850           Oligotrichum aligerum           Plantae                2
+851         Oligotrichum parallelum           Plantae               16
+852            Oncorhynchus kisutch    Actinopterygii               17
+853             Oncorhynchus lewisi    Actinopterygii                1
+854             Oncorhynchus mykiss    Actinopterygii               39
+855        Oncorhynchus tshawytscha    Actinopterygii                5
+856             Operophtera brumata           Insecta                1
+857          Ophiogomphus mainensis           Insecta                3
+858              Ophioparma ventosa             Fungi                4
+859              Oplopanax horridus           Plantae              139
+860               Opuntia cespitosa           Plantae                4
+861                    Orcinus orca          Mammalia               18
+862              Oreohelix strigosa          Mollusca                7
+863             Oreojuncus trifidus           Plantae                6
+864            Oreoscoptes montanus              Aves                1
+865          Orthocarpus bracteosus           Plantae                1
+866              Orthocarpus luteus           Plantae                2
+867                  Osmerus mordax    Actinopterygii                4
+868              Osmorhiza berteroi           Plantae               68
+869           Osmorhiza depauperata           Plantae               22
+870           Osmorhiza longistylis           Plantae               36
+871           Ossicaulis lignatilis             Fungi                2
+872                   Ostrea lurida          Mollusca                1
+873              Ostrinia nubilalis           Insecta                1
+874          Otiorhynchus ligustici           Insecta                1
+875                Ovibos moschatus          Mammalia                5
+876                 Oxalis dillenii           Plantae               57
+877                  Oxalis montana           Plantae               56
+878                   Oxyria digyna           Plantae                3
+879             Oxyrrhynchium hians           Plantae                2
+880              Oxytropis borealis           Plantae               30
+881            Oxytropis campestris           Plantae               48
+882               Oxytropis deflexa           Plantae               18
+883           Oxytropis maydelliana           Plantae                1
+884             Oxytropis podocarpa           Plantae                5
+885               Oxytropis sericea           Plantae               87
+886              Oxyura jamaicensis              Aves               96
+887         Pachydiplax longipennis           Insecta               39
+888                Packera indecora           Plantae                3
+889              Packera pauciflora           Plantae                5
+890              Packera plattensis           Plantae                9
+891              Packera pseudaurea           Plantae                2
+892             Paludella squarrosa           Plantae                1
+893               Pannaria conoplea             Fungi                7
+894                 Pannaria lurida             Fungi               16
+895             Pannaria rubiginosa             Fungi                3
+896          Pantherophis spiloides          Reptilia               58
+897           Pantherophis vulpinus          Reptilia               82
+898              Pantosteus jordani    Actinopterygii                1
+899              Papilio brevicauda           Insecta               11
+900               Papilio polyxenes           Insecta              206
+901      Parancistrocerus leionotus           Insecta                3
+902  Parancistrocerus pensylvanicus           Insecta                2
+903         Parietaria pensylvanica           Plantae               10
+904               Parmelia fertilis             Fungi                1
+905            Parmeliopsis ambigua             Fungi                3
+906             Parmotrema arnoldii             Fungi                2
+907             Parmotrema crinitum             Fungi                3
+908             Parmotrema perlatum             Fungi                1
+909          Parmotrema reticulatum             Fungi                4
+910            Parnassius smintheus           Insecta                5
+911            Parvindela terricola           Insecta               12
+912       Passerculus sandwichensis              Aves              161
+913                Passerina cyanea              Aves              142
+914            Patagioenas fasciata              Aves               11
+915                Pectenia plumbea             Fungi                2
+916          Pedicularis canadensis           Plantae               57
+917        Pedicularis groenlandica           Plantae               27
+918            Pedicularis racemosa           Plantae                9
+919            Pedicularis sudetica           Plantae                5
+920       Pelecanus erythrorhynchos              Aves              156
+921                Pellaea gastonyi           Plantae                5
+922                Pellaea glabella           Plantae                6
+923               Peltigera collina             Fungi                2
+924           Peltigera elisabethae             Fungi                2
+925          Peltigera horizontalis             Fungi                6
+926               Peltigera malacea             Fungi                2
+927                Peltigera venosa             Fungi                5
+928              Penstemon procerus           Plantae              153
+929              Penthorum sedoides           Plantae                3
+930               Percina copelandi    Actinopterygii               10
+931            Perimyotis subflavus          Mammalia                1
+932              Petromyzon marinus          Animalia                5
+933                Phacelia purshii           Plantae                1
+934            Phacelia ramosissima           Plantae                1
+935            Phaeophyscia ciliata             Fungi                2
+936             Phalacrocorax carbo              Aves               10
+937              Phalaropus lobatus              Aves               12
+938             Phalaropus tricolor              Aves               61
+939       Phanogomphus graslinellus           Insecta                4
+940        Phanogomphus quadricolor           Insecta                4
+941         Phegopteris connectilis           Plantae              100
+942         Pheucticus ludovicianus              Aves              132
+943            Philadelphus lewisii           Plantae               67
+944                  Phleum alpinum           Plantae                4
+945                  Phlox subulata           Plantae               23
+946                  Phoca vitulina          Mammalia               41
+947               Phocoena phocoena          Mammalia                5
+948              Pholisora catullus           Insecta                8
+949           Phrynosoma hernandesi          Reptilia                1
+950              Phymatodes grandis           Insecta                1
+951                   Physcia dubia             Fungi                2
+952                   Physcia phaea             Fungi                3
+953                 Physcia tenella             Fungi                1
+954            Physciella chloantha             Fungi                4
+955               Physconia detersa             Fungi                6
+956          Physconia enteroxantha             Fungi                3
+957               Physconia grumosa             Fungi                1
+958             Physconia muscigena             Fungi                2
+959           Physocarpus malvaceus           Plantae                6
+960            Phytolacca americana           Plantae               17
+961               Phytoplasma pruni                                  1
+962               Picoides arcticus              Aves               24
+963               Picoides dorsalis              Aves               22
+964               Pieris marginalis           Insecta                8
+965             Pilophorus cereolus             Fungi                1
+966               Pilophorus fibula             Fungi                1
+967             Pinguicula vulgaris           Plantae               83
+968                Pinus albicaulis           Plantae               17
+969                 Pinus banksiana           Plantae              141
+970                  Pinus flexilis           Plantae               16
+971             Pituophis catenifer          Reptilia                8
+972          Plagiobothrys scouleri           Plantae               15
+973          Plagiomnium ellipticum           Plantae               10
+974             Plagiomnium insigne           Plantae               28
+975           Plagiomnium rostratum           Plantae                5
+976            Plagiopus oederianus           Plantae                2
+977           Planorbella trivolvis          Mollusca               31
+978               Plantago maritima           Plantae               96
+979             Plantago patagonica           Plantae               21
+980             Platanthera hookeri           Plantae               24
+981              Platanthera lacera           Plantae                1
+982           Platanthera praeclara           Plantae                1
+983           Platanus occidentalis           Plantae               27
+984              Platismatia glauca             Fungi               27
+985           Platismatia norvegica             Fungi               12
+986              Platygyrium repens           Plantae                2
+987           Platynus cincticollis           Insecta                6
+988              Pleopsidium flavum             Fungi                3
+989            Plestiodon fasciatus          Reptilia               52
+990         Plestiodon skiltonianus          Reptilia                1
+991                   Pluteus nanus             Fungi                1
+992              Pluvialis dominica              Aves                1
+993                     Poa alsodes           Plantae               15
+994                     Poa secunda           Plantae                7
+995                Podiceps auritus              Aves               25
+996            Podiceps nigricollis              Aves               15
+997             Podilymbus podiceps              Aves               70
+998         Pogonia ophioglossoides           Plantae                2
+999                 Pohlia annotina           Plantae                6
+1000                   Pohlia cruda           Plantae                6
+1001              Polistes metricus           Insecta                2
+1002                  Polites draco           Insecta                2
+1003                Polygonia comma           Insecta               27
+1004               Polygonia faunus           Insecta               87
+1005              Polygonia satyrus           Insecta               50
+1006             Polygonum achoreum           Plantae               13
+1007       Polypodium appalachianum           Plantae                1
+1008           Polypodium hesperium           Plantae                8
+1009           Polypodium sibiricum           Plantae                1
+1010         Polypodium virginianum           Plantae              127
+1011           Polyporus umbellatus             Fungi                1
+1012      Polysporina subfuscescens             Fungi                2
+1013            Polystichum braunii           Plantae                9
+1014          Polystichum lonchitis           Plantae               28
+1015             Pontederia cordata           Plantae               22
+1016            Pooecetes gramineus              Aves               47
+1017          Populus grandidentata           Plantae              126
+1018            Porpidia crustulata             Fungi               13
+1019               Potamilus alatus          Mollusca                3
+1020        Potamogeton amplifolius           Plantae                5
+1021           Potamogeton foliosus           Plantae                2
+1022        Potamogeton illinoensis           Plantae                2
+1023            Potamogeton nodosus           Plantae                7
+1024       Potamogeton obtusifolius           Plantae                1
+1025       Potamogeton richardsonii           Plantae               22
+1026          Potamogeton robbinsii           Plantae                4
+1027      Potamogeton zosteriformis           Plantae                7
+1028             Potentilla arenosa           Plantae               16
+1029          Potentilla bimundorum           Plantae                5
+1030          Potentilla canadensis           Plantae               13
+1031            Potentilla crantzii           Plantae                2
+1032       Potentilla flabellifolia           Plantae                2
+1033        Potentilla glaucophylla           Plantae               17
+1034            Potentilla hudsonii           Plantae                3
+1035            Potentilla macounii           Plantae               30
+1036               Potentilla nivea           Plantae                5
+1037         Potentilla pulcherrima           Plantae               31
+1038               Prays atomocella           Insecta                4
+1039            Primula laurentiana           Plantae               11
+1040                   Progne subis              Aves               72
+1041            Protonotaria citrea              Aves               12
+1042       Protopannaria pezizoides             Fungi                9
+1043            Pseudacris crucifer          Amphibia              112
+1044            Pseudacris maculata          Amphibia               29
+1045        Pseudevernia consocians             Fungi                6
+1046       Pseudocampylium radicale           Plantae                1
+1047   Pseudocyphellaria holarctica             Fungi               19
+1048 Pseudocyphellaria rainierensis             Fungi                5
+1049  Pseudognaphalium obtusifolium           Plantae                1
+1050           Pseudomonas syringae                                  6
+1051       Pseudosuccinea columella          Mollusca                5
+1052      Pseudotaxiphyllum elegans           Plantae               30
+1053           Psilocarphus elatior           Plantae                3
+1054               Psoroma hypnorum             Fungi                2
+1055              Ptelea trifoliata           Plantae               13
+1056       Pterigynandrum filiforme           Plantae                4
+1057          Pterospora andromedea           Plantae               27
+1058          Ptychostomum weigelii           Plantae                1
+1059              Puccinia coronata             Fungi              184
+1060         Pulsatilla nuttalliana           Plantae              108
+1061        Punctelia appalachensis             Fungi                2
+1062              Punctelia rudecta             Fungi               18
+1063       Pycnanthemum tenuifolium           Plantae                1
+1064     Pycnanthemum verticillatum           Plantae                1
+1065       Pycnanthemum virginianum           Plantae                7
+1066          Pycnoporellus fulgens             Fungi                1
+1067                   Pyrola picta           Plantae                9
+1068              Quadrula quadrula          Mollusca                3
+1069             Quercus ilicifolia           Plantae                3
+1070              Quercus shumardii           Plantae                1
+1071             Quiscalus quiscula              Aves              366
+1072                Radula obconica           Plantae                1
+1073             Ramalina farinacea             Fungi               12
+1074            Ramalina intermedia             Fungi                1
+1075        Ramalina labiosorediata             Fungi                1
+1076                    Rana aurora          Amphibia               29
+1077              Rangifer tarandus          Mammalia               24
+1078         Ranunculus flabellaris           Plantae               12
+1079            Ranunculus gmelinii           Plantae               19
+1080            Ranunculus hispidus           Plantae               18
+1081           Ranunculus inamoenus           Plantae                3
+1082          Ranunculus lapponicus           Plantae                7
+1083            Ranunculus macounii           Plantae               22
+1084       Ranunculus pensylvanicus           Plantae               11
+1085          Ranunculus recurvatus           Plantae               87
+1086          Ranunculus sceleratus           Plantae               60
+1087           Regina septemvittata          Reptilia                2
+1088          Rhabdoweisia crispata           Plantae                1
+1089              Rhagoletis cerasi           Insecta                1
+1090           Rhagoletis pomonella           Insecta                1
+1091         Rhinichthys cataractae    Actinopterygii               19
+1092        Rhionaeschna multicolor           Insecta               21
+1093           Rhizomnium punctatum           Plantae                3
+1094       Rhizoplaca subdiscrepans             Fungi                7
+1095          Rhodobryum ontariense           Plantae               12
+1096         Rhododendron canadense           Plantae              203
+1097        Rhododendron lapponicum           Plantae               23
+1098         Rhynchophanes mccownii              Aves                1
+1099         Rhytidiadelphus loreus           Plantae               68
+1100     Rhytidiadelphus squarrosus           Plantae               10
+1101              Rhytidium rugosum           Plantae                3
+1102               Ribes americanum           Plantae               62
+1103                Ribes cynosbati           Plantae              102
+1104                Ribes hirtellum           Plantae               28
+1105           Ribes oxyacanthoides           Plantae               57
+1106        Riccardia chamedryfolia           Plantae               12
+1107            Ricciocarpos natans           Plantae                6
+1108             Rifargia subrotata           Insecta                2
+1109                Riparia riparia              Aves               49
+1110      Ripariosida hermaphrodita           Plantae                1
+1111               Rissa tridactyla              Aves               27
+1112               Rorippa aquatica           Plantae                1
+1113                Rosa acicularis           Plantae              396
+1114                 Rosa arkansana           Plantae              135
+1115                    Rosa blanda           Plantae              151
+1116                  Rosa setigera           Plantae                2
+1117              Rubus flagellaris           Plantae               49
+1118              Rubus parviflorus           Plantae              368
+1119                  Rubus pedatus           Plantae               42
+1120             Rufoplaca arenaria             Fungi                1
+1121              Sagina saginoides           Plantae                1
+1122             Sagittaria cuneata           Plantae                8
+1123            Sagittaria graminea           Plantae                2
+1124             Sagittunio nasutus          Mollusca                3
+1125            Salix arbusculoides           Plantae                6
+1126                  Salix boothii           Plantae                2
+1127              Salix brachycarpa           Plantae                6
+1128                  Salix candida           Plantae               31
+1129                Salix commutata           Plantae                3
+1130                   Salix glauca           Plantae               26
+1131                   Salix jejuna           Plantae                1
+1132              Salix maccalliana           Plantae                2
+1133            Salix myrtillifolia           Plantae                3
+1134             Salix pedicellaris           Plantae               10
+1135          Salix pseudomonticola           Plantae               11
+1136             Salix richardsonii           Plantae                3
+1137                Salix serissima           Plantae                3
+1138                 Salix uva-ursi           Plantae                9
+1139                  Salix vestita           Plantae               18
+1140                    Salmo salar    Actinopterygii                8
+1141         Salvelinus confluentus    Actinopterygii                2
+1142              Sambucus racemosa           Plantae              444
+1143            Samolus parviflorus           Plantae                2
+1144                 Sander vitreus    Actinopterygii               44
+1145               Sanicula odorata           Plantae               19
+1146            Sarcogyne regularis             Fungi                2
+1147                Satyrium behrii           Insecta               99
+1148               Satyrium calanus           Insecta                2
+1149             Saxifraga aizoides           Plantae                1
+1150            Saxifraga cespitosa           Plantae                6
+1151           Saxifraga hyperborea           Plantae                1
+1152          Saxifraga mertensiana           Plantae               12
+1153        Saxifraga oppositifolia           Plantae               20
+1154           Saxifraga paniculata           Plantae                3
+1155                Sayornis phoebe              Aves              174
+1156          Schistidium apocarpum           Plantae                4
+1157        Schistidium crassipilum           Plantae                1
+1158          Schistidium maritimum           Plantae               12
+1159        Schistochilopsis incisa           Plantae               27
+1160           Schistostega pennata           Plantae                4
+1161         Schoenoplectus pungens           Plantae               14
+1162   Schoenoplectus subterminalis           Plantae                3
+1163             Scirpus atrovirens           Plantae               26
+1164               Scirpus pendulus           Plantae               31
+1165          Sclerophora peronella             Fungi                1
+1166                 Scolopax minor              Aves               30
+1167        Scrophularia lanceolata           Plantae                8
+1168            Scutellaria parvula           Plantae               12
+1169          Scytinium lichenoides             Fungi                3
+1170               Sebastes maliger    Actinopterygii                1
+1171              Sebastes pinniger    Actinopterygii                2
+1172            Sebastes ruberrimus    Actinopterygii                3
+1173                Sedum divergens           Plantae               11
+1174          Selaginella rupestris           Plantae                4
+1175       Selaginella selaginoides           Plantae                3
+1176           Selaginella wallacei           Plantae               21
+1177             Seligeria donniana           Plantae                5
+1178         Sematophyllum demissum           Plantae                1
+1179            Setophaga americana              Aves               24
+1180             Setophaga castanea              Aves               13
+1181              Setophaga cerulea              Aves                2
+1182                Setophaga fusca              Aves               35
+1183                  Sialia sialis              Aves               65
+1184           Sibbaldia procumbens           Plantae                4
+1185                 Silene acaulis           Plantae               26
+1186              Silene antirrhina           Plantae                6
+1187              Silene drummondii           Plantae                4
+1188               Silene menziesii           Plantae               23
+1189            Silphium laciniatum           Plantae                1
+1190      Silphium terebinthinaceum           Plantae                3
+1191            Sistrurus catenatus          Reptilia               44
+1192     Sisyrinchium angustifolium           Plantae               25
+1193        Sisyrinchium mucronatum           Plantae               11
+1194             Sitta carolinensis              Aves               59
+1195                     Sium suave           Plantae               49
+1196            Smilax rotundifolia           Plantae                4
+1197             Solidago altissima           Plantae               16
+1198               Solidago hispida           Plantae               11
+1199                Solidago juncea           Plantae               13
+1200          Solidago multiradiata           Plantae               18
+1201             Solidago riddellii           Plantae                1
+1202           Somateria mollissima              Aves               55
+1203          Somatochlora kennedyi           Insecta                2
+1204                  Sorex vagrans          Mammalia                2
+1205             Sorghastrum nutans           Plantae                3
+1206           Sparganium fluctuans           Plantae                3
+1207                Spatula discors              Aves              136
+1208              Spea intermontana          Amphibia                2
+1209         Spergularia canadensis           Plantae                4
+1210         Sphaerophorus fragilis             Fungi                2
+1211              Sphagnum austinii           Plantae               12
+1212           Sphagnum rubiginosum           Plantae               16
+1213              Sphagnum strictum           Plantae                1
+1214              Sphagnum tenellum           Plantae               12
+1215            Sphenolobus minutus           Plantae               10
+1216        Sphenopholis intermedia           Plantae                5
+1217           Sphyrapicus nuchalis              Aves               10
+1218         Sphyrapicus thyroideus              Aves                1
+1219             Sphyrapicus varius              Aves               94
+1220                 Spinus tristis              Aves              349
+1221              Spiraea splendens           Plantae                9
+1222              Spiranthes cernua           Plantae                1
+1223             Spiranthes incurva           Plantae                1
+1224                Spiza americana              Aves                4
+1225               Splachnum luteum           Plantae                2
+1226              Squalus acanthias          Animalia                3
+1227               Squalus suckleyi          Animalia                2
+1228     Stelgidopteryx serripennis              Aves               59
+1229             Stellaria humifusa           Plantae                3
+1230           Stellaria longifolia           Plantae               28
+1231             Stellaria longipes           Plantae               40
+1232       Stercorarius longicaudus              Aves                3
+1233       Stercorarius parasiticus              Aves                2
+1234          Stereocaulon pileatum             Fungi                1
+1235          Stereocaulon saxatile             Fungi               30
+1236                Sterna forsteri              Aves               15
+1237                 Sterna hirundo              Aves               87
+1238              Sterna paradisaea              Aves                8
+1239          Sternotherus odoratus          Reptilia               22
+1240              Sticta beauvoisii             Fungi                1
+1241         Streptopus lanceolatus           Plantae              163
+1242       Streptopus streptopoides           Plantae                4
+1243                    Strix varia              Aves              121
+1244                Sturnella magna              Aves               25
+1245             Sturnella neglecta              Aves               50
+1246          Stylophorum diphyllum           Plantae                4
+1247          Suaeda calceoliformis           Plantae                8
+1248      Suksdorfia ranunculifolia           Plantae                8
+1249           Sylvilagus nuttallii          Mammalia               26
+1250                Sympetrum danae           Insecta                2
+1251       Symphyotrichum foliaceum           Plantae                1
+1252   Symphyotrichum novae-angliae           Plantae               21
+1253      Synthliboramphus antiquus              Aves                1
+1254           Syntrichia laevipila           Plantae                1
+1255             Syntrichia ruralis           Plantae               18
+1256           Taenidia integerrima           Plantae               10
+1257                  Taxidea taxus          Mammalia               17
+1258               Taxus brevifolia           Plantae               57
+1259               Taxus canadensis           Plantae               74
+1260            Tellima grandiflora           Plantae               84
+1261   Teloschistes chrysophthalmus             Fungi                5
+1262          Tephroseris palustris           Plantae               44
+1263       Tetralophozia setiformis           Plantae               16
+1264           Tetraneuris herbacea           Plantae               15
+1265        Tetrodontium brownianum           Plantae               11
+1266        Thamnobryum neckeroides           Plantae                1
+1267             Thamnophis butleri          Reptilia                5
+1268             Thamnophis saurita          Reptilia               10
+1269          Thelypteris palustris           Plantae               64
+1270       Thryothorus ludovicianus              Aves               13
+1271           Thuidium delicatulum           Plantae               12
+1272            Timandra amaturaria           Insecta                2
+1273               Timmia austriaca           Plantae                3
+1274              Tofieldia pusilla           Plantae                4
+1275        Toxicodendron rydbergii           Plantae              208
+1276           Toxicodendron vernix           Plantae                2
+1277                Toxostoma rufum              Aves               73
+1278             Triantha glutinosa           Plantae               14
+1279          Triantha occidentalis           Plantae                6
+1280         Trichoferus campestris           Insecta                2
+1281         Trichoglossum hirsutum             Fungi                1
+1282           Trichophorum alpinum           Plantae               12
+1283          Trillium grandiflorum           Plantae              131
+1284                Trillium ovatum           Plantae               70
+1285                Tringa flavipes              Aves                7
+1286             Tringa melanoleuca              Aves               11
+1287             Tringa semipalmata              Aves               30
+1288              Troglodytes aedon              Aves              129
+1289           Troglodytes hiemalis              Aves               19
+1290             Tsuga heterophylla           Plantae              205
+1291                Turritis glabra           Plantae               39
+1292                  Tuta absoluta           Insecta                1
+1293            Tyrannus verticalis              Aves               48
+1294                   Tyto furcata              Aves                3
+1295         Umbilicaria hyperborea             Fungi                5
+1296          Umbilicaria mammulata             Fungi               30
+1297         Umbilicaria polyphylla             Fungi                4
+1298         Umbilicaria torrefacta             Fungi                2
+1299                     Uria aalge              Aves               32
+1300                    Uria lomvia              Aves                3
+1301             Urile penicillatus              Aves                1
+1302       Urocyon cinereoargenteus          Mammalia                1
+1303                   Ursus arctos          Mammalia               10
+1304                Ursus maritimus          Mammalia                1
+1305               Usnea perplexans             Fungi                5
+1306            Utricularia cornuta           Plantae                1
+1307              Vaccinium boreale           Plantae                9
+1308           Vaccinium corymbosum           Plantae               21
+1309         Vaccinium membranaceum           Plantae               50
+1310           Vaccinium uliginosum           Plantae               61
+1311               Valeriana dioica           Plantae               10
+1312          Vallisneria americana           Plantae               11
+1313                Veratrum viride           Plantae              107
+1314                Verbena hastata           Plantae               11
+1315                Verbena simplex           Plantae                9
+1316            Verbena urticifolia           Plantae               30
+1317          Vermivora chrysoptera              Aves               18
+1318         Veronica serpyllifolia           Plantae              164
+1319       Veronicastrum virginicum           Plantae                6
+1320           Viburnum acerifolium           Plantae              127
+1321           Viburnum lantanoides           Plantae               81
+1322                   Viola blanda           Plantae                6
+1323              Viola labradorica           Plantae               41
+1324               Viola lanceolata           Plantae               60
+1325             Viola nephrophylla           Plantae               41
+1326               Viola pedatifida           Plantae                2
+1327                Viola praemorsa           Plantae                1
+1328                  Viola sororia           Plantae               64
+1329                   Vireo gilvus              Aves               99
+1330           Vireo philadelphicus              Aves                8
+1331                 Vitis labrusca           Plantae                3
+1332                   Vulpes velox          Mammalia                2
+1333         Webbhelix multilineata          Mollusca                1
+1334             Wolffia columbiana           Plantae                2
+1335                 Woodsia obtusa           Plantae                3
+1336                Woodsia oregana           Plantae                8
+1337              Woodsia scopulina           Plantae               19
+1338            Xanthomendoza fulva             Fungi                1
+1339   Xanthoparmelia camtschadalis             Fungi                6
+1340       Xanthoparmelia conspersa             Fungi                4
+1341         Xanthoparmelia plittii             Fungi                2
+1342      Xanthoparmelia wyomingica             Fungi                1
+1343                    Xema sabini              Aves                2
+1344              Xylaria hypoxylon             Fungi                8
+1345             Xylaria polymorpha             Fungi              102
+1346                   Yucca glauca           Plantae                1
+1347         Zeltnera muehlenbergii           Plantae                1
+1348              Zizania palustris           Plantae                3
+1349                   Zizia aptera           Plantae              141
+1350                    Zizia aurea           Plantae              121
+1351               Zoraena maculata           Insecta               18
+1352                Zoraena obliqua           Insecta                6
+1353           Zygodon viridissimus           Plantae                1
+1354                                                              4938</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>              scientific_name iconic_taxon_name
+69     Antennaria microphylla           Plantae
+324   Cephalanthera austiniae           Plantae
+343          Chlosyne gorgone           Insecta
+727      Lepisosteus oculatus    Actinopterygii
+851   Oligotrichum parallelum           Plantae
+1056 Pterigynandrum filiforme           Plantae</code></pre>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    setTimeout(function() {
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      let href = ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const cites = ref.parentNode.getAttribute('data-cites').split(' ');
+    tippyHover(ref, function() {
+      var popup = window.document.createElement('div');
+      cites.forEach(function(cite) {
+        var citeDiv = window.document.createElement('div');
+        citeDiv.classList.add('hanging-indent');
+        citeDiv.classList.add('csl-entry');
+        var biblioDiv = window.document.getElementById('ref-' + cite);
+        if (biblioDiv) {
+          citeDiv.innerHTML = biblioDiv.innerHTML;
+        }
+        popup.appendChild(citeDiv);
+      });
+      return popup.innerHTML;
+    });
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

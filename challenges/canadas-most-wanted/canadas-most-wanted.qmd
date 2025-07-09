@@ -1,0 +1,67 @@
+---
+title: "Challenge: Canada's Most Wanted"
+author: Leeya Nagpal
+date: "2025-07-09"
+format: html
+toc: true
+---
+
+This challenge was made by Eniola Olu-Ayorinde and Sarfaroz Yunusov as part of the Living Data Project working group.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+library(arrow)
+```
+
+## What this script does
+
+This script shows the species that have been logged from the original most wanted list 
+
+## Load Data
+```{r Data}
+inat_pq <- arrow::open_dataset("C:/Users/dogpa/OneDrive - McGill University/Laura's Lab_Group - inat-canada/iNat_non_sensitive_data_Jan2025.parquet")
+
+query <- inat_pq |> 
+  # Summarise number of obs per species, per species group
+  group_by(iconic_taxon_name, scientific_name) |>
+  summarize(total_obs = n()) |> 
+  # load the query into our R session
+  collect()
+
+## omit nas
+oldiNat<-na.omit(query)
+
+oldList <- read.csv("C:/Users/dogpa/SpeciesList/relevantSpecies/full_list_canadas_most_wanted.csv", sep = ";")
+oldList <- na.omit(oldList)
+
+newSpecies <- read.csv("C:/Users/dogpa/SpeciesList/relevantSpecies/june1-18.csv") #change if it's parquet file
+newSpecies <- newSpecies %>%
+  group_by(iconic_taxon_name,scientific_name) %>%
+  summarise(total_observations = sum(total_obs, na.rm = TRUE)) %>%
+  ungroup()
+```
+
+## Analysis
+
+```{r Analysis}
+
+found <- data.frame(subset(oldList$Scientific_Name, oldList$Scientific_Name %in% newSpecies$scientific_name))
+colnames(found) <- c("scientific_name")
+withTaxa <- left_join(found, newSpecies, by = "scientific_name")
+colnames(withTaxa) <- c("scientific_name", "iconic_taxon_name", "new_observations")
+withOld <- left_join(withTaxa, oldiNat, relationship = "many-to-many")
+obs100 <- subset(withOld, (withOld$total_obs < 100) & ((withOld$total_obs + withOld$new_observations) > 100))
+obs100<- obs100[,c(1,2)]
+```
+
+## Results
+
+Plots Below:
+1) Priority map after Blitz the Gap
+2) Comparison of priority areas pre and post BtG
+```{r Results, echo = FALSE}
+print(obs100) #species that are no longer 'most wanted' after BtG
+```
+
