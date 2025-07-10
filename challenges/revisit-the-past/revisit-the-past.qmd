@@ -1,0 +1,63 @@
+---
+title: "Challenge: Revisit the Past"
+author: Leeya Nagpal
+output: html_document
+date: "2025-07-10"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#knitr::opts_knit$set(root.dir = '~/Documents/GitHub/BTG-analyse-the-gap/')
+
+library(dplyr) 
+library(tidyr)
+```
+
+## Data
+
+This file demonstrates the workflow needed to generate the found species from Blitz the Gap Data
+
+Firstly, the both new and old datasets must be loaded in, as well as the original 'Missing Species' Lists
+```{r Data}
+
+inat_pq <- arrow::open_dataset("C:/Users/dogpa/OneDrive - McGill University/Laura's Lab_Group - inat-canada/iNat_non_sensitive_data_Jan2025.parquet")
+
+old <- inat_pq |> 
+  # Summarise number of obs per species, per species group
+  group_by(iconic_taxon_name, scientific_name) |>
+  summarize(total_obs = n()) |> 
+  # load the query into our R session
+  collect()
+
+new <- read.csv("C:/Users/dogpa/SpeciesList/relevantSpecies/june1-18.csv")
+
+# List CSVs matching pattern
+file_list <- list.files(path = "C:/Users/dogpa/SpeciesList/relevantSpecies", 
+                        pattern = "^Last Seen.*\\.csv$", 
+                        full.names = TRUE)
+
+```
+
+## Analysis
+
+You can also embed plots, for example:
+
+```{r Analysis}
+
+# Read and bind
+allMissing <- file_list %>%
+  lapply(read.csv) %>%
+  bind_rows()
+
+realMissing <- subset(allMissing, !(allMissing$species %in% old$scientific_name))
+realMissing <- realMissing[,c(2,3)] #Isolate scientific name and Iconic Taxa Columns
+
+notMissingNow <- subset(realMissing, realMissing$species %in% new$scientific_name) #Pull species that are in missing list AND in new sampled list
+```
+
+## Results
+
+Here is the list generated below:
+```{r Results, echo = FALSE}
+print(notMissingNow)
+```
