@@ -53,6 +53,9 @@ realMissing <- subset(allMissing, !(allMissing$species %in% old$scientific_name)
 realMissing <- realMissing[,c(2,3)] #Isolate scientific name and Iconic Taxa Columns
 
 notMissingNow <- subset(realMissing, realMissing$species %in% new$scientific_name) #Pull species that are in missing list AND in new sampled list
+
+allYears <- sort(realMissing$year)
+
 ```
 
 ## Results
