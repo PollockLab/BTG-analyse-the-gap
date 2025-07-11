@@ -130,13 +130,7 @@ final$priority = as.factor(final$priority)
 levels(final$priority)
 
 final = final %>% filter(!is.na(Priority))
-final =final %>% select(c(NAME, boat_count, geom, priority)) %>%
-  rename('Boat Access' = boat_count, 'Name' = NAME, 'Priority' = priority) 
-final <- st_transform(final, crs="EPSG:4326")
-st_write(final, "new_water2.geojson")
-
-final2 = final %>% filter(!is.na(priority))
-final3 = final2 %>% select(c(NAME, boat_count, geom, priority)) %>%
+final3 = final %>% select(c(NAME, boat_count, geom, priority)) %>%
   rename('Boat Access' = boat_count, 'Name' = NAME, 'Priority' = priority) 
 
 write_sf(final3, "new_data_for_challenge_map.gpkg")
@@ -147,6 +141,18 @@ final3 <- st_transform(final3, crs="EPSG:4326")
 
 st_write(final3, "new_water.geojson")
 
+#compare
+oldMap <- read_sf("data_for_challenge_map.gpkg")
+
+colnames(oldMap)[colnames(oldMap) == "Priority"] <- "priority_pre"
+colnames(final3)[colnames(final3) == "Priority"] <- "priority_post"
+
+compare <- full_join(pre, post, by = "NAME")
+compare <- compare %>%
+  mutate(priority_changed = priority_pre != priority_post)
+
+priority_changes <- compare %>%
+  filter(priority_changed)
 
 ```
 
@@ -162,7 +168,7 @@ m=mapview(final3,
         col.regions = pal,
         zcol = "Priority", 
         lwd=0,
-        na.color = "transparent") 
+        na.color = "transparent")
 
 ```
 

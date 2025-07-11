@@ -122,8 +122,8 @@ new_gini_park <- function(park.name){
 sapply(pk$Park_name, gini_park)
 
 #COMPARE WITH OLD MAP
-oldGini <- readRDS("parks_gini.csv")[,1]
-newGini <- readRDS("new-parks-gini.csv")[,1]
+oldGini <- read.csv("parks_gini.csv")[,1]
+newGini <- read.csv("new-parks-gini.csv")[,1]
 
 colnames(oldGini)[colnames(oldGini) == "priority"] <- "priority_pre"
 colnames(newGini)[colnames(newGini) == "priority"] <- "priority_post"
