@@ -1,0 +1,50 @@
+---
+title: "Challenge: Hey Birders, don't look up!"
+author: Ryan Hull
+date: "2025-07-11"
+format: html
+toc: true
+---
+
+This challenge was made by Camila Diaz, Christophe Brabant, David Hunt, Katherine Hébert, Laura Pollock, Lindsay Trottier, Lucas Eckert, and Lukas Van Riel of the Living Data Project working group.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE)
+knitr::opts_knit$set(root.dir = here::here())
+
+library(arrow)
+library(dbplyr, warn.conflicts = FALSE)
+```
+
+## About the challenge
+This challenge targets the birders of Canada, inviting them to observe 
+less-sampled organisms during their iNaturalist outings.
+
+Being the only Blitz the Gap challenge that is members-only, it is also a more
+direct measure of Blitz the Gap's outreach success than any other challenge.
+
+## What this script does
+Tallies the total observation count broken down by iconic species group.
+Presents average observations per user.
+Compares past vs present %observations which are birds to observe the trend.
+
+## Load data
+```{r Data}
+
+# All inaturalist observations for Canada until Jan 2025
+inat_pq <- arrow::open_dataset("C:/Users/Dell/OneDrive - McGill University/Laura's Lab_Group - Blitz the Gap/iNaturalist Canada parquet/iNat_non_sensitive_data_Jan2025.parquet")
+
+# Observations from the birders challenge
+birders_pq <- arrow:open_datset(....)
+
+# Breaking down our challenge's observations
+obs <- inat_pq |>
+  # filter to mammals in this case
+  filter(iconic_taxon_name %in% "Aves") |>
+  # select columns we want to keep
+  select(c(observed_on_string,
+           iconic_taxon_name, 
+           scientific_name, 
+           coordinates_obscured,
+           place_county_name)) |>
+  collect()
