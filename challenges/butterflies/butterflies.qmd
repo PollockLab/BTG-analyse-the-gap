@@ -1,0 +1,59 @@
+---
+title: "Challenge: More than a Monarch"
+author: Leeya Nagpal
+output: html_document
+date: "2025-07-14"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = '~/Documents/GitHub/BTG-analyse-the-gap/')
+
+library(dplyr) 
+library(tidyr)
+```
+
+## Data
+
+This file demonstrates the workflow needed to generate the found species from Blitz the Gap Data
+
+Firstly, the both new and old datasets must be loaded in, as well as the original 'Missing Species' Lists
+```{r Data}
+
+inat_pq <- arrow::open_dataset("C:/Users/dogpa/OneDrive - McGill University/Laura's Lab_Group - inat-canada/iNat_non_sensitive_data_Jan2025.parquet")
+
+old <- inat_pq |> 
+  # Summarise number of obs per species, per species group
+  group_by(iconic_taxon_name, scientific_name) |>
+  summarize(total_obs = n()) |> 
+  # load the query into our R session
+  collect()
+
+new <- read.csv("C:/Users/dogpa/SpeciesList/relevantSpecies/june1-18.csv")
+
+
+df <- read.csv("C:/Users/dogpa/SpeciesList/relevantSpecies/completeList.csv")
+butterflyList <- df[grepl("Lepidoptera", df$order, ignore.case = TRUE),]
+butterflySpecies <- data.frame(butterflyList$species)
+butterflySpecies <- data.frame(butterflySpecies[butterflySpecies$Species != "Danaus plexippus", ])
+colnames(butterflySpecies) <- c("scientific_name")
+```
+
+## Analysis
+
+You can also embed plots, for example:
+
+```{r Analysis}
+btgButterflies <- subset(butterflySpecies,butterflySpecies$Species %in% new$scientific_name)
+withObs <- left_join(btgButterflies, new)
+withObs <- distinct(withObs)
+```
+
+## Results
+
+Here is the list generated below:
+```{r Results, echo = FALSE}
+print(withObs)
+
+```
+
