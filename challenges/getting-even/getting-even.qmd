@@ -57,12 +57,12 @@ counties<-terra::vect("counties_of_canada.gpkg")
 county_df< -readRDS("county-data.RDS")
 values(counties)<-left_join(values(counties), select(county_df, CDUID, n.points))
 
-base.5k<-terra::rast("/Users/lucaseckert/Library/CloudStorage/OneDrive-McGillUniversity/Side Projects/Bioblitz/Laura's Lab_Group - data/raw/base-layers/canada.base.5k.tiff")
+base.5k<-terra::rast("canada.base.5k.tiff")
 ```
 
 ## Analysis
 
-
+Generating the Getting Even Map with new BtG data, and comparing differences to the old data
 ```{r}
 
 get_obs<-function(taxa){

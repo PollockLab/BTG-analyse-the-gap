@@ -43,7 +43,7 @@ old<-na.omit(query)
 new <- read.csv("C:/Users/dogpa/SpeciesList/relevantSpecies/june1-18.csv")
 
 #species
-canada_gbif_clean <- read.csv("C:/Users/linds/OneDrive - McGill University/LivingData_Blitz/can_gbif_names.csv")
+canada_gbif_clean <- read.csv("can_gbif_names.csv")
 
 canada = sf::read_sf("canada.outline.shp")
 base.50k = terra::rast("canada.base.5k.tiff")

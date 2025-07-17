@@ -1,0 +1,188 @@
+---
+title: "Challenge: Closing the Climate Gap"
+author: Noah Wightman
+output: html_document
+date: "2025-07-17"
+---
+
+## Data
+
+This file demonstrates the workflow needed to generate the found species from Blitz the Gap Data
+
+Firstly, the both new and old datasets must be loaded in, as well as the original 'Missing Species' Lists
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = '~/Documents/GitHub/BTG-analyse-the-gap/')
+
+library(terra)
+library(ks)
+library(reshape)
+library(tidyverse)
+
+{
+  #base raster
+  base_rast <- rast("USCanadaOutline.tif")
+  values(base_rast)<-0
+  
+  #read env layers.
+  MAT<-rast("Normal_1991_2020_MAT.tif")
+  MAP <- rast("EnvUsCan_MAP.tif")
+  
+  MAT<-focal(MAT,w=11,fun=mean) #smoooth to avoid weird artifacts
+  MAP<-focal(MAP,w=11,fun=mean)
+  
+  crs(MAP) <- crs(MAT)
+  env<-c(MAT,MAP)
+  names(env) <- c("MAT","MAP")
+  
+  #canada shp file
+  canshp<-vect("goodcan.shp")
+  
+  #get random sample of cells from canada, and env of those cells
+  cancells<-cells(env,canshp)[,2]
+  canenv <- terra::extract(env,sample(cancells,300000))
+  canenv<-canenv[complete.cases(canenv),]
+  
+  #read in inat data from canada in june ** CHANGE TO FULL NEW PARQUET WHEN AVAILABLE
+  inat<-read.csv("June1-18.csv")
+  
+  inat<-vect(inat[,c("latitude","longitude","scientific_name")],geom=c("longitude","latitude"))
+  #writeVector(inat,"Inputs/inat/inat_june.shp")
+  crs(inat)<-"WGS84"
+  inat<-project(inat,crs(MAT))
+  #get env of  cells with inat obs
+  inat_cells<-cells(rast(env),inat)[,2]
+  inat_env  <- terra::extract(env,inat_cells)
+  inat_env<-inat_env[complete.cases(inat_env),c("MAT","MAP")]
+  
+  #read in inat data from climate challlenge of btg ** CHANGE TO FULL NEW FILE WHEN AVAILABLE
+  inat_btg<-read.csv("inat_climate_gap.csv")
+  
+  inat_btg<-vect(inat_btg[,c("latitude","longitude","scientific_name")],geom=c("longitude","latitude"))
+  #writeVector(inat_btg,"Inputs/inat/inat_climate_gap.shp")
+  crs(inat_btg)<-"WGS84"
+  inat_btg<-project(inat_btg,crs(MAT))
+  
+  #get env of  cells with climate challenge obs
+  inat_btg_cells<-cells(env,inat_btg)[,2]
+  inat_btg_env  <- terra::extract(env,inat_btg_cells)
+  inat_btg_env<-inat_btg_env[complete.cases(inat_btg_env),c("MAT","MAP")]
+  
+}
+```
+
+
+## Analysis
+
+You can also embed plots, for example:
+
+```{r Data}
+{
+  #kernel density estimates approximte a smooth function of the density of points 
+    #in multiple dimensions (2 here)
+  # run kernel density estimates of 2d distribution of envs for each set
+  ranges <- rbind(canenv,inat_env,inat_btg_env) |> apply(2,range,na.rm=T)
+  
+  bg_can_dens <- kde(canenv, density = T,xmin=ranges[1,],xmax=ranges[2,],H=diag(c(3,2000)))
+  inat_dens <- kde(inat_env, density = T,xmin=ranges[1,],xmax=ranges[2,],H=diag(c(3,2000)))
+  inat_btg_dens <- kde(inat_btg_env, density = T,xmin=ranges[1,],xmax=ranges[2,],H=diag(c(3,2000)))
+  
+  # assign env values to rows and cols of 2d dens esrtimate
+  kde_can<-bg_can_dens$estimate
+  rownames(kde_can) <- bg_can_dens$eval.points$MAT
+  colnames(kde_can) <- bg_can_dens$eval.points$MAP
+  
+  kde_inat<-inat_dens$estimate
+  rownames(kde_inat) <- inat_dens$eval.points$MAT
+  colnames(kde_inat) <- inat_dens$eval.points$MAP 
+  
+  kde_inat_btg<-inat_btg_dens$estimate
+  rownames(kde_inat_btg) <- inat_btg_dens$eval.points$MAT
+  colnames(kde_inat_btg) <- inat_btg_dens$eval.points$MAP 
+}
+
+##PLOTTING DFS: DATA FRAMES USED IN GGPLOT
+{
+  # df of kdes for each set
+  kdedf <-rbind( 
+      melt(kde_can) |> mutate(type="can"),
+      melt(kde_inat) |> mutate(type="inat"),
+      melt(kde_inat_btg) |> mutate(type="inat_btg")
+  )
+  
+  colnames(kdedf) <- c("MAT","MAP","density","type")
+  kdedf<- kdedf |> mutate(log=log(density+0.00000001),sr =sqrt(density))
+  
+  #df of raw points for each set
+  df_plot <- rbind(
+    data.frame(temp=canenv[1:2000,"MAT"],
+               prec=canenv[1:2000,"MAP"],
+               type="total_can"),
+    
+    data.frame(temp=inat_env[sample(1:nrow(inat_env),2000),"MAT"],
+               prec=inat_env[sample(1:nrow(inat_env),2000),"MAP"],
+               type="inat"),
+    
+    data.frame(temp=inat_btg_env[sample(1:nrow(inat_btg_env),2000),"MAT"],
+               prec=inat_btg_env[sample(1:nrow(inat_btg_env),2000),"MAP"],
+               type="inat_btg")
+  )
+  
+}
+
+```
+
+
+## Results
+
+```{r Analysis}
+{
+  #if I dont jitter the points, theres a line of points at 3 degrees MAT
+    #turns out edmonton, winipeg and kenora are all at 3.00 on the MAT raster
+    #some weird artifact of the climate model i guess
+  
+  inat_plot <-ggplot() +
+    geom_point(data=df_plot[df_plot$type=="total_can",],aes(x=prec,y=temp),
+               size=1,alpha=0.2,color="red3",pch=20) +
+    geom_contour(data=kdedf[kdedf$type=="can",], 
+                 aes(x = MAP, y = MAT, z = density),linewidth = 1,
+                 bins = 7, color = "red3") +
+    
+    geom_point(data=df_plot[df_plot$type=="inat",],aes(x=prec,y=temp),
+               size=1,alpha=0.2,color="green4",pch=20) +
+    geom_contour(data=kdedf[kdedf$type=="inat",], 
+                 aes(x = MAP, y = MAT, z = density),linewidth = 1,
+                 bins = 7, color = "green4")+  
+    
+    scale_color_viridis_c() +
+    scale_y_reverse(limits=ranges[c(2,1),1]) +
+    xlim(0,2500)+
+    theme_classic() 
+    
+    
+  btg_plot <- inat_plot +
+    geom_jitter(data=df_plot[df_plot$type=="inat_btg",],aes(x=prec,y=temp),
+               size=1,alpha=0.2,color="purple4",pch=20, height=1,width=50) +
+    geom_contour(data=kdedf[kdedf$type=="inat_btg",], 
+                 aes(x = MAP, y = MAT, z = density),linewidth = 1,
+                 bins = 7, color = "purple4") 
+    
+  
+  
+  
+  
+  
+  png("Figures/canada_only_env_bias.png")
+  inat_plot
+  dev.off()
+  
+  png("Figures/canada_only_btg.png")
+  btg_plot
+  dev.off()
+
+}
+
+```
+
+
