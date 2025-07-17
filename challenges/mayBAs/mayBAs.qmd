@@ -48,12 +48,13 @@ old<-na.omit(query)
 
 new <- read.csv("C:/Users/dogpa/SpeciesList/relevantSpecies/june1-18.csv")
 
-
+oldMap <- read_sf("validonly.shp")
 ```
 
 ## Analysis
 
 ```{r Analysis}
+
 
 ```
 

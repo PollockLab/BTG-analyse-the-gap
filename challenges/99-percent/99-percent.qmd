@@ -50,15 +50,17 @@ new <- read.csv("C:/Users/dogpa/SpeciesList/relevantSpecies/june1-18.csv")
 
 
 ## counties
-counties<-terra::vect("/Users/lucaseckert/Library/CloudStorage/OneDrive-Personal/Side Projects/Blitz/counties_of_canada.gpkg")
+counties<-terra::vect("counties_of_canada.gpkg")
 
 ```
 
 ## Analysis
 
+Generating the 99% Map with new BtG data, and comparing differences to the old data
+
 ```{r Analysis}
 
-## inat layer
+if (){## inat layer
 inat_vect<-terra::vect(new, geom = c("longitude","latitude"), crs="+proj=longlat +ellps=WGS84")
 inat_vect<-terra::project(inat_vect, crs(counties))
 
@@ -89,6 +91,7 @@ top_counties$cum_obs<-cumsum(top_counties$n.points)/sum(top_counties$n.points)
 top_counties[100:111,]
 
 saveRDS(top_counties, file = "new-county-data.RDS")
+}
 
 values(counties)<-left_join(values(counties), select(top_counties, CDUID, obs_density))
 counties$obs_density_log<-log10(counties$obs_density)

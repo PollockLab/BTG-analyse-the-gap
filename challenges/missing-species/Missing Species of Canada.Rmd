@@ -7,7 +7,7 @@ date: "2025-07-04"
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_knit$set(root.dir = '~/Documents/GitHub/BTG-analyse-the-gap/')
+#knitr::opts_knit$set(root.dir = '~/Documents/GitHub/BTG-analyse-the-gap/')
 
 library(dplyr) 
 library(tidyr)
@@ -61,5 +61,4 @@ taxabreakdown <- data.frame(table(notMissingNow$iconic_taxon_name))
 Here is the list generated below:
 ```{r Results, echo = FALSE}
 print(notMissingNow)
-print(taxabreakdown)
 ```

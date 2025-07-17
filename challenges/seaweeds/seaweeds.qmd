@@ -19,7 +19,6 @@ This file demonstrates the workflow needed to generate the found species from Bl
 
 Firstly, the both new and old datasets must be loaded in, as well as the original 'Missing Species' Lists
 ```{r Data}
-```{r Data}
 
 inat_pq <- arrow::open_dataset("C:/Users/dogpa/OneDrive - McGill University/Laura's Lab_Group - inat-canada/iNat_non_sensitive_data_Jan2025.parquet")
 
