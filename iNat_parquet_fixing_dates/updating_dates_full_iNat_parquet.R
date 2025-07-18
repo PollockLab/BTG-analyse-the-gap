@@ -5655,13 +5655,9 @@ obs18$month_numeric_when_alphabetic <- NULL
 
 all_obs <- rbind(obs1, obs2, obs3, obs4, obs5, obs6, obs7, obs8, obs9, obs10, obs11, obs12, obs13, obs14, obs15, obs16, obs17, obs18)
 
-print(obs[7777777, "observed_on_string"])
-print(all_obs[7777777, "observed_on_string"])
-print(all_obs[7777777, "standardized_date_ddmmyyyy"])
-
-
-
-
-
 #### (commented out the line to avoid massive accident downloads in undesired locations)
-#### write_parquet(obs, "C:/Users/Dell/OneDrive - McGill University/Laura's Lab_Group - Blitz the Gap/iNaturalist Canada parquet/iNat_non_sensitive_data_Jan2025_dates_standardized.parquet")
+#### write_parquet(all_obs, "C:/Users/Dell/OneDrive - McGill University/Laura's Lab_Group - Blitz the Gap/iNaturalist Canada parquet/iNat_non_sensitive_data_Jan2025_dates_standardized.parquet")
+
+# check what you've downloaded before losing precious session data
+# inat_pq_standardized <- arrow::open_dataset("C:/Users/Dell/OneDrive - McGill University/Laura's Lab_Group - Blitz the Gap/iNaturalist Canada parquet/iNat_non_sensitive_data_Jan2025_dates_standardized.parquet")
+# names(inat_pq_standardized)

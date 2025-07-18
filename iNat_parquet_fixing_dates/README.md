@@ -18,6 +18,10 @@ Certain ambiguous dates exist - month and date placement cannot be known for sur
 
 using InatParqFixDates, standardizes all dates from a full iNat parquet, dividing into chunks to avoid session crashing. Only keeps columns for unique row ID, original date, standardized date, and is_ambiguous.
 
+### restoring_full_parquet_columns.R
+this will bring back all the columns to our new standardized (but col-truncated) pq.
+
+
 ## Usage
 
 ### InatParqFixDates.R
@@ -25,5 +29,4 @@ using InatParqFixDates, standardizes all dates from a full iNat parquet, dividin
 code was written for a subset of around 480,000 iNat observations - only the mammal observations in Canada. For different subsets, the checks may need to be modified, hence it is better to run the code line-by-line and check the outputs.
 
 ### updating_dates_full_iNat_parquet.R
-
 code was written for a Jan2025 version of the parquet file, and may need to be painstakingly modified to re-do on other parquets in retrospect.
