@@ -11,7 +11,7 @@ This challenge was made by Lukas Van Riel as part of the Living Data Project wor
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_knit$set(root.dir = '~/Documents/GitHub/BTG-analyse-the-gap/')
+knitr::opts_knit$set(root.dir = '~/Documents/GitHub/BTG-analyse-the-gap/trailblazers')
 library(ggplot2)
 library(dplyr)
 library(arrow)
@@ -32,12 +32,12 @@ This script uses the code from the original Trailblazers Challenge (designed by 
 ```{r Data}
 
 parks <- sf::st_read(dsn = "00_rawdata/trailblazers/national_parks/national parks.shp")
-canada <- sf::read_sf("00_rawdata/trailblazers/canada-polygon/canada.outline.shp")
-base.5k <- terra::rast("00_rawdata/base-layers/canada.base.5k.tiff")
-base.1k <- terra::rast("00_rawdata/base-layers/canada.base.1k.tiff")
+canada <- sf::read_sf("canada.outline.shp")
+base.5k <- terra::rast("canada.base.5k.tiff")
+base.1k <- terra::rast("canada.base.1k.tiff")
 
 #inat parquet
-inat_pq <- arrow::open_dataset("~/Desktop/RProjects/Blitz-the-gap/00_rawdata/trailblazers/iNat/iNat_non_sensitive_data_Jan2025.parquet")
+inat_pq <- arrow::open_dataset("C:/Users/dogpa/OneDrive - McGill University/Laura's Lab_Group - inat-canada/iNat_non_sensitive_data_Jan2025.parquet")
 
 # Create query and collect afterwards
 query <- inat_pq |> 
@@ -50,9 +50,10 @@ old <- na.omit(query)
 new <- read.csv("newParquet.csv")
 
 # Rework
-inat.v <- terra::vect(new, geom = c("longitude","latitude"), crs="+proj=longlat +ellps=WGS84")
+inat.v <- terra::vect(new, geom = c("longitude","latitude"), crs="+proj=longlat +ellps=WGS84", keepgeom = TRUE)
 inat.v <- terra::project(inat.v, crs(base.1k))
 inat.v <- terra::crop(inat.v, canada)
+
 
 # simplify parks polygons
 parks.simple = sf::st_simplify(parks, preserveTopology = FALSE, dTolerance = 1000) # 1 km tolerance
@@ -76,7 +77,7 @@ p1k <- obs_counts %>%
   filter(Freq > 1000) %>% 
   arrange(desc(Freq)) %>% 
   rename(Park_name=Var1, N_obs=Freq) %>% 
-  write.csv("~/Desktop/RProjects/Blitz-the-gap/00_rawdata/trailblazers/parks-observations/1k.csv")
+  write.csv("~/Desktop/RProjects/Blitz-the-gap/00_rawdata/trailblazers/parks-observations/1k.csv") #** request
 
 ##### Gini index:
 pk <- pk1[,-1]
@@ -85,7 +86,7 @@ new_gini_park <- function(park.name){
   print(park.name) # To keep track
   
   # Check which ones are done already
-  parks.done <- read.csv("01_outdata/trailblazers/Gini/parks-gini.csv")[,-1]
+  parks.done <- read.csv("parks-gini.csv")[,-1]
   if(park.name %in% parks.done$Park_name){
     return()
   } else {
@@ -115,14 +116,14 @@ new_gini_park <- function(park.name){
                                       1,
                                       ifelse(gini > 0.75, 2, 3)))
   
-  write.csv(rbind(parks.done, output), "01_outdata/trailblazers/Gini/new-parks-gini.csv")
+  write.csv(rbind(parks.done, output), "new-parks-gini.csv")
   }
 }
  
 sapply(pk$Park_name, gini_park)
 
 #COMPARE WITH OLD MAP
-oldGini <- read.csv("parks_gini.csv")[,1]
+oldGini <- read.csv("parks-gini.csv")[,1]
 newGini <- read.csv("new-parks-gini.csv")[,1]
 
 colnames(oldGini)[colnames(oldGini) == "priority"] <- "priority_pre"
@@ -151,7 +152,7 @@ if (file.exists("01_outdata/trailblazers/gini_parks_map.rds")){
 } else{
 
 ## Create objects to plot
-park_gini <- read.csv("01_outdata/trailblazers/Gini/parks-gini.csv")[,-1] %>% 
+park_gini <- read.csv("parks-gini.csv")[,-1] %>% 
   select(-priority)
 
 gini_parks_map <- sf::st_as_sf(parks) %>%
@@ -165,7 +166,7 @@ gini_parks_map <- sf::st_as_sf(parks) %>%
                             ifelse(gini > 0.75, 2, 3)))) %>% 
   rename(Park = Park_name)
   
-saveRDS(gini_parks_map, "01_outdata/trailblazers/new_gini_parks_map.rds")
+saveRDS(gini_parks_map, "new_gini_parks_map.rds")
 }
 
 parks_centroid <- new_gini_parks_map %>% 

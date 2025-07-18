@@ -12,7 +12,7 @@ This challenge was made by Lucas Eckert as part of the Living Data Project worki
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_knit$set(root.dir = '~/Documents/GitHub/BTG-analyse-the-gap/')
+#knitr::opts_knit$set(root.dir = '~/Documents/GitHub/BTG-analyse-the-gap/challenges/99-percent')
 
 library(ggplot2)
 library(dplyr)
@@ -34,7 +34,7 @@ This script uses the code from the original 99% Challenge (designed by Lucas Eck
 ## Load Data
 ```{r Data}
 
-inat_pq <- arrow::open_dataset("C:/Users/dogpa/OneDrive - McGill University/Laura's Lab_Group - inat-canada/iNat_non_sensitive_data_Jan2025.parquet")
+inat_pq <- arrow::open_dataset("C:/Users/dogpa/McGill University/Laura's Lab_Group - Blitz the Gap/iNaturalist Canada parquet/iNat_non_sensitive_data_Jan2025.parquet")
 
 query <- inat_pq |> 
   # Summarise number of obs per species, per species group
@@ -46,11 +46,23 @@ query <- inat_pq |>
 ## omit nas
 old<-na.omit(query)
 
-new <- read.csv("C:/Users/dogpa/SpeciesList/relevantSpecies/june1-18.csv")
+newPq1 <- read.csv("C:/Users/dogpa/SpeciesList/relevantSpecies/june1-9.csv")
+newPq2 <- read.csv("C:/Users/dogpa/SpeciesList/relevantSpecies/june10-18.csv")
+newPq <- rbind(newPq1, newPq2)
+
+inatNew <- newPq |> 
+  group_by(iconic_taxon_name, scientific_name, latitude, longitude) |>
+  summarize(total_obs = n(), .groups = "drop")
+
 
 
 ## counties
-counties<-terra::vect("counties_of_canada.gpkg")
+counties<-terra::vect("C:/Users/dogpa/McGill University/Laura's Lab_Group - Blitz the Gap/Results 2025/Input-files/data/gettingeven/counties_of_canada.gpkg")
+
+rm(newPq)
+rm(newPq1)
+rm(newPq2)
+rm(query)
 
 ```
 
@@ -60,59 +72,55 @@ Generating the 99% Map with new BtG data, and comparing differences to the old d
 
 ```{r Analysis}
 
-if (){## inat layer
-inat_vect<-terra::vect(new, geom = c("longitude","latitude"), crs="+proj=longlat +ellps=WGS84")
+## inat layer
+inat_vect<-terra::vect(inatNew, geom = c("longitude","latitude"), crs="+proj=longlat +ellps=WGS84")
 inat_vect<-terra::project(inat_vect, crs(counties))
 
-## obs
-obs_counts<-terra::extract(counties, inat_vect)
 
-country.data<-data.frame("County"=counties$CDUID)
-country.data$n.points=NA
+# Intersect points with polygons
+intersections <- terra::intersect(inat_vect, counties)
 
-for (i in 1:nrow(country.data)){
-  c=country.data$County[i]
-  poly=counties[which(counties$CDUID==c)]
-  points<-crop(inat_vect,ext(poly))
-  country.data$n.points[i]=length(which(terra::relate(poly,points,relation="intersects")))
-  remove(c,poly,points)
-  print(i)
-}
+# Tabulate how many points per county
+obs_counts <- table(intersections$CDUID)
 
-country.data<-mutate(country.data, CDUID=County)
+# Turn into data frame
+obs_df <- data.frame(CDUID = names(obs_counts), n.points = as.integer(obs_counts))
 
-county_df<-as.data.frame(values(counties)) %>% left_join(country.data) %>% 
-  mutate(obs_density=n.points/LANDAREA) %>% select(-County)
+county_df<-as.data.frame(values(counties)) %>% left_join(obs_df) %>% 
+  mutate(obs_density=n.points/LANDAREA)
 
 top_counties<-county_df[order(county_df$obs_density, decreasing = T),]
 top_counties$cum_area<-cumsum(top_counties$LANDAREA)/sum(top_counties$LANDAREA)
 top_counties$cum_obs<-cumsum(top_counties$n.points)/sum(top_counties$n.points)
 
-top_counties[100:111,]
-
 saveRDS(top_counties, file = "new-county-data.RDS")
-}
+
 
 values(counties)<-left_join(values(counties), select(top_counties, CDUID, obs_density))
 counties$obs_density_log<-log10(counties$obs_density)
 
-counties$priority<-NA
-counties$priority[counties$obs_density>35.5]<-"low"
-counties$priority[counties$obs_density<35.5 & counties$obs_density>9.55]<-"medium"
-counties$priority[counties$obs_density<9.55]<-"high"
-counties$priority<-factor(counties$priority, levels = c("high","medium","low"))
-
-
 ## COMPARE OLD AND NEW
-old_99 <- readRDS("county-data.RDS")
+old_99 <- readRDS("C:/Users/dogpa/McGill University/Laura's Lab_Group - Blitz the Gap/Results 2025/Input-files/data/gettingeven/county-data.RDS")
 
-pre_df <- as.data.frame(values(old_99)) %>%
+old_99$priority<-NA
+old_99$priority[old_99$obs_density>35.5]<-"low"
+old_99$priority[old_99$obs_density<35.5 & old_99$obs_density>9.55]<-"medium"
+old_99$priority[old_99$obs_density<9.55]<-"high"
+old_99$priority<-factor(old_99$priority, levels = c("high","medium","low"))
+
+top_counties$priority<-NA
+top_counties$priority[(top_counties$obs_density +old_99$obs_density) >35.5]<-"low"
+top_counties$priority[(top_counties$obs_density + old_99$obs_density) <35.5 & (top_counties$obs_density + old_99$obs_density )>9.55]<-"medium"
+top_counties$priority[(top_counties$obs_density+old_99$obs_density)<9.55]<-"high"
+top_counties$priority<-factor(top_counties$priority, levels = c("high","medium","low"))
+
+pre_df <- old_99 %>%
   select(CDUID, priority_pre = priority)
 
-post_df <- as.data.frame(values(top_counties)) %>%
+post_df <- top_counties %>%
   select(CDUID, priority_post = priority)
 
-comparison <- full_join(old_99, top_counties, by = "CDUID") %>%
+comparison <- full_join(pre_df, post_df, by = "CDUID") %>%
   mutate(priority_changed = priority_pre != priority_post)
 
 # View changes
@@ -123,6 +131,10 @@ table(comparison$priority_pre, comparison$priority_post, useNA = "ifany")
 
 # How many changed
 sum(comparison$priority_changed, na.rm = TRUE)
+
+
+#for mapping
+values(counties) <- left_join(values(counties), comparison, by =  "CDUID")
 
 ```
 
@@ -159,6 +171,6 @@ values(new_map) <- left_join(
   by = "CDUID"
 )
 
-mapview(counties, zcol = "priority_changed", col.regions = c("gray", "red"))
+mapview(counties, zcol = "priority_changed", col.regions = c("gray", "red", "blue"))
 ```
 

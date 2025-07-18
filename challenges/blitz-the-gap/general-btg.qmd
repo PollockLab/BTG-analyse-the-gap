@@ -1,0 +1,64 @@
+---
+title: "Blitz the Gap"
+author: Leeya Nagpal
+date: "2025-07-17"
+format: html
+toc: true
+---
+Things we're looking at: Novel Areas, Local Bioblitz impacts, 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = '~/Documents/GitHub/BTG-analyse-the-gap/')
+
+library(sf)
+library(raster)
+library(mapview)
+library(gdalcubes)
+library(rstac)
+library(stars)
+library(terra)
+library(ggplot2)
+library(leaflet)
+library(leafpop)
+
+```
+
+## What this script does
+
+
+## Load Data
+```{r Data}
+
+inat_pq <- arrow::open_dataset("C:/Users/dogpa/OneDrive - McGill University/Laura's Lab_Group - inat-canada/iNat_non_sensitive_data_Jan2025.parquet")
+
+query <- inat_pq |> 
+  # Summarise number of obs per species, per species group
+  group_by(iconic_taxon_name, scientific_name) |>
+  summarize(total_obs = n()) |> 
+  # load the query into our R session
+  collect()
+
+## omit nas
+old<-na.omit(query)
+
+new <- read.csv("C:/Users/dogpa/SpeciesList/relevantSpecies/june1-18.csv")
+
+```
+
+## Analysis
+
+```{r Analysis}
+
+
+```
+
+## Results
+
+Plots Below:
+1) Priority map after Blitz the Gap
+2) Comparison of priority areas pre and post BtG
+```{r Results, echo = FALSE}
+
+```
+
