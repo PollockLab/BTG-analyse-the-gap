@@ -163,11 +163,3 @@ for(sp in 1:length(species)){
 saveRDS(range_coverage, paste0("outputs/range-coverage/range_coverage_", taxagroups[t], ".rds"))
 
 
-
-
-
-query$scientific_name[1] %in% species
-
-(range_bien <- BIEN_ranges_load_species(query$scientific_name[3])) 
-range_bien |> nrow()
-plot(range_bien[1])
