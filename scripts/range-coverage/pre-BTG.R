@@ -84,22 +84,8 @@ saveRDS(range_coverage, paste0("outputs/range-coverage/range_coverage_", taxagro
 
 }
 
-## Plot! =======================================================================
 
-df = lapply(as.list(paste0("outputs/range-coverage/range_coverage_", taxagroups[-5], ".rds")), readRDS)
-names(df) = taxagroups[-5]
-df = bind_rows(df, .id = "Taxa")
-
-ggplot(data = df) +
-  geom_jitter(aes(col = Taxa, 
-                 x = 100*coverage_min1/range_size_canada,
-                 y = Taxa)) +
-  theme(legend.position = "none") +
-  scale_x_continuous() +
-  labs(x = "Range coverage", y = "")
-
-
-## Plants - BIEN ranges --------------------------------------------------------
+## Plants ----------------------------------------------------------------------
 
 # can_list = BIEN::BIEN_list_country("Canada")
 
@@ -107,7 +93,8 @@ ggplot(data = df) +
 query <- inat_pq |> 
   # filter by species group:
   filter(iconic_taxon_name == "Plantae",
-         captive_cultivated == FALSE) |>
+         captive_cultivated == FALSE,
+         !is.na(latitude)) |> # exclude species with erased coordinates (NA; vulnerable sp)
   # Summarise number of obs per species, per species group
   group_by(iconic_taxon_name, scientific_name) |>
   summarize(total_obs = n()) |> 
@@ -119,11 +106,11 @@ query <- inat_pq |>
 species = query$scientific_name[which(lengths(strsplit(query$scientific_name, "\\W+"))==2)]
 
 # Run for all species
-for(sp in 1:length(species)){
+for(spp in 1:length(species)){
   
   # Load the range map from BIEN
   
-  range_sf <- BIEN_ranges_load_species(species[sp])
+  range_sf <- BIEN_ranges_load_species(species[spp])
   
   # go to next species if there isn't a range polygon
   if(nrow(range_sf) == 0){ next
@@ -135,15 +122,15 @@ for(sp in 1:length(species)){
   }
   
   # Calculate range coverage
-  temp = calc_range_coverage(species_name = species[sp], 
+  temp = calc_range_coverage(species_name = species[spp], 
                              range = range_rast,
                              inat = query)
   # save as a new row to append
-  new_row = c(species[sp], temp$coverage[1], temp$coverage[2], temp$coverage[3], 
+  new_row = c(species[spp], temp$coverage[1], temp$coverage[2], temp$coverage[3], 
               temp$n_cells_canada)
   
   # start data frame OR append to existing data frame
-  if(sp == 1){
+  if(spp == 1){
     range_coverage = data.frame(t(new_row))
     colnames(range_coverage) = c("species",
                                 "coverage_min1",
@@ -155,11 +142,33 @@ for(sp in 1:length(species)){
   }
   
   # save every 500 species to avoid losing progress
-  if(sp %in% seq(500, 7000, 500)){
+  if(spp %in% seq(500, 7000, 500)){
     saveRDS(range_coverage, paste0("outputs/range-coverage/range_coverage_PLANTS.rds"))
   }
 }
+# Convert character columns to numeric
+range_coverage_tosave = range_coverage
+range_coverage_tosave[,c(2:5)] <- apply(range_coverage_tosave[,c(2:5)], 2, as.numeric)
 # final save
-saveRDS(range_coverage, paste0("outputs/range-coverage/range_coverage_", taxagroups[t], ".rds"))
+saveRDS(range_coverage_tosave, 
+        paste0("outputs/range-coverage/range_coverage_PLANTS.rds"))
 
 
+## Plot! =======================================================================
+
+df = lapply(as.list(paste0("outputs/range-coverage/range_coverage_", taxagroups, ".rds")), readRDS)
+names(df) = taxagroups
+df = bind_rows(df, .id = "Taxa")
+
+(p = ggplot(data = df) +
+    geom_jitter(aes(col = Taxa, 
+                    x = 100*coverage_min1/range_size_canada,
+                    y = Taxa,
+                    group = species)) +
+    colorspace::scale_color_discrete_qualitative() +
+    theme(legend.position = "none") +
+    scale_x_continuous() +
+    labs(x = "Range coverage", y = ""))
+
+library(plotly)
+ggplotly(p, tooltip = "species")

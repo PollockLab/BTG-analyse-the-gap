@@ -6,7 +6,7 @@
 calc_range_coverage = function(species_name, range, inat = query){
   
   # choose a species
-  # sp = "Acris blanchardi"
+  # sp = "Panax quinquefolius"
   sp = species_name
   
   # select species range
@@ -20,8 +20,8 @@ calc_range_coverage = function(species_name, range, inat = query){
     filter(scientific_name == sp) |>
     select(c(longitude, latitude, scientific_name)) |>
     collect()
-  
-  # make a spatial layer
+
+    # make a spatial layer
   occ = terra::vect(occ, 
                     geom = c("longitude", "latitude"), 
                     crs = crs(canada))
