@@ -162,7 +162,7 @@ df = bind_rows(df, .id = "Taxa")
 
 (p = ggplot(data = df) +
     geom_jitter(aes(col = Taxa, 
-                    x = 100*coverage_min1/range_size_canada,
+                    x = 100*coverage_min1/range_size_canada, # three levels: 1,3,10
                     y = Taxa,
                     group = species)) +
     colorspace::scale_color_discrete_qualitative() +
