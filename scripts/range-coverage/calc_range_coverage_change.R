@@ -5,9 +5,10 @@
 
 # tester
 # species_name = "Anaxyrus americanus"
+# filepath = paste0("~/McGill University/Laura's Lab_Group - IUCN Ranges/Unclipped/EASE2.0_12.5km/", taxagroups[1], "/")
 # range = terra::rast(paste0(filepath, species_name, ".tif"))
 
-calc_range_coverage_change = function(species_name, range, inat = inat_pq){
+calc_range_coverage_change = function(species_name, range, inat = inat_pq, new_data){
   
   # choose a species
   # sp = "Panax quinquefolius"
@@ -15,9 +16,10 @@ calc_range_coverage_change = function(species_name, range, inat = inat_pq){
   
   # select species range
   range[range>0] = 1
-  canada = project(canada, crs(range))
+  
   # cut range to Canada only
-  range_can = terra::resample(range, canada)
+  canada_poly = project(canada_poly, crs(range))
+  range_can = terra::crop(range, canada_poly, mask = TRUE, touches = FALSE)
   
   # get all occurrence points of the species from inat parquet
   occ = inat |> 
@@ -27,26 +29,28 @@ calc_range_coverage_change = function(species_name, range, inat = inat_pq){
   
   # Make a "before" raster -----------------------------------------------------
   
-  before = occ
-  before$longitude = before$longitude*100000
-  before$latitude = before$latitude*100000
-  
   # make a spatial layer
-  before = terra::vect(before, 
+  before = terra::vect(occ, 
                        geom = c("longitude", "latitude"), 
-                       crs = crs(range_can))
+                       crs = "epsg:4326")
+  before = terra::project(before, crs(range_can))
   
   # count number of points per grid cell
-  range_before = rasterize(before, range_can, fun = "length", background = 0)
+  range_before = rasterize(before, range_can, fun = "count", background = 0) |>
+    terra::crop(range_can, mask = TRUE, touches = FALSE)
 
-  # Make a "after" raster ------------------------------------------------------
+  # Make an "after" raster -----------------------------------------------------
   
   # get new inat obs from BTG
-  btg.occ <- get_inat_obs(taxon_name = species_name, 
+  # btg.occ <- new_data |>
+  #   dplyr::filter(scientific_name == species_name) |>
+  #   select(c(longitude, latitude, scientific_name))
+  
+  btg.occ <- rinat::get_inat_obs(taxon_name = species_name, 
                           year = 2025, 
                           geo = TRUE,
-                          maxresults = 100,
-                          bounds = bounds,
+                          maxresults = 10000,
+                          bounds = c(41.310824,-157.500000,83.420215,-49.921875),
                           quality = "research") |>
     tidyr::separate("observed_on",
                     into =  c("year", "month", "day")) |>
@@ -57,55 +61,30 @@ calc_range_coverage_change = function(species_name, range, inat = inat_pq){
   
   # join pre-BTG and during BTG datasets
   occ = rbind(occ, btg.occ)
-  occ$longitude = occ$longitude*100000
-  occ$latitude = occ$latitude*100000
   
   # make a spatial layer
   occ = terra::vect(occ, 
-                    geom = c("longitude", "latitude"), 
-                    crs = crs(range_can))
+                       geom = c("longitude", "latitude"), 
+                       crs = "epsg:4326")
+  occ = terra::project(occ, crs(range_can))
   
   # count number of cells in the range
   ncells_range = sum(values(range), na.rm = TRUE)
   ncells_range_can = sum(values(range_can), na.rm = TRUE)
   
   # count number of points per grid cell
-  range_after = rasterize(occ, range_can, fun = "length", background = 0)
-
-  # set ranges to 1 or 0 if enough observations have been found
-  range_enoughdata_min1 = range_after
-  range_enoughdata_min1[range_after >= 1] <- 1
-  range_enoughdata_min1[range_after < 1] <- 0
+  range_after = terra::rasterize(occ, range_can, fun = "count", background = 0) |>
+  terra::crop(range_can, mask = TRUE, touches = FALSE)
   
-  # set ranges to 1 or 0 if enough observations have been found
-  range_enoughdata_min3 = range_after
-  range_enoughdata_min3[range_after >= 3] <- 1
-  range_enoughdata_min3[range_after < 3] <- 0
-  
-  # set ranges to 1 or 0 if enough observations have been found
-  range_enoughdata_min10 = range_after
-  range_enoughdata_min10[range_after >= 10] <- 1
-  range_enoughdata_min10[range_after < 10] <- 0
-  
-  # count number of cells with enough data
-  ncells_enoughdata = c(
-    sum(values(range_enoughdata_min1), na.rm = TRUE),
-    sum(values(range_enoughdata_min3), na.rm = TRUE),
-    sum(values(range_enoughdata_min10), na.rm = TRUE)
-  )
+  # change per pixel
+  range_change = range_after - range_before
   
   # make into a percentage
-  coverage = ncells_enoughdata
   raster_stack = c(range_before, 
                    range_after,
-                   range_enoughdata_min1,
-                   range_enoughdata_min3,
-                   range_enoughdata_min10)
-  names(raster_stack) = c("before", "after", "min1", "min3", "min10")
-  raster_stack = terra::crop(raster_stack, range_can, mask = TRUE)
+                   range_change)
+  names(raster_stack) = c("before", "after", "change")
   
-  return(list("coverage" = coverage,
-              "n_cells_canada" = ncells_range_can,
-              "n_cells_fullrange" = ncells_range,
-              "rasters" = raster_stack))
+  return(raster_stack)
+              
 }
