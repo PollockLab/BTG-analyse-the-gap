@@ -70,23 +70,5 @@ for(t in c(1:4,6)){
     })
   }
 }
-# 
-# 
-# 
-# rc_before = lapply(paste0("outputs/range-coverage/range_coverage_", taxagroups[c(1:4,6)], ".rds"), readRDS)
-# rc_after = lapply(paste0("outputs/range-coverage/after/range_coverage_", taxagroups[c(1:4,6)], ".rds"), readRDS)
-# names(rc_before) = taxagroups[c(1:4,6)]
-# names(rc_after) = taxagroups[c(1:4,6)]
-# rc_before = rc_before |> bind_rows(.id = "Taxa")
-# rc_after = rc_after |> bind_rows(.id = "Taxa")
-# rc_compare = left_join(rc_before, rc_after, 
-#                        by = c("Taxa", "species", "range_size_canada", "range_size_full"), 
-#                        suffix = c(".before", ".after"))
-# 
-# 
-# ggplot(data = rc_compare) +
-#   geom_point(aes(col = Taxa, 
-#                 y = (coverage_min1.after-coverage_min1.before)/range_size_canada,
-#                 x = Taxa))
 
 ## reminder: code the plants version
