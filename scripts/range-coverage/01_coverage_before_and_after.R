@@ -1,5 +1,3 @@
-# Calculate change in range coverage -------------------------------------------
-
 # Script to calculate the range coverage of a species as the number of
 # 10km2 cells that have at least 1, 3, or 10 observations in them
 
@@ -71,4 +69,39 @@ for(t in c(1:4,6)){
   }
 }
 
-## reminder: code the plants version
+## Plants version
+
+for(t in c(5)){
+  
+  # Load species names that have previously been included
+  species = dplyr::filter(df, Taxa == taxagroups[t]) |>
+    select(species) |>
+    as.matrix() |> as.vector()
+  
+  for(i in 1:length(species)){
+    tryCatch({  
+      
+      range_sf <- BIEN::BIEN_ranges_load_species(species[i])
+      
+      # go to next species if there isn't a range polygon
+      if(nrow(range_sf) == 0){ next
+      } else {
+        range_rast = range_sf |>
+          terra::vect() |> 
+          terra::project(crs(canada)) |>
+          terra::rasterize(canada)
+      }
+      
+      temp = calc_range_coverage_change(species_name = species[i], 
+                                        range = range_rast,
+                                        inat = inat_pq
+      )
+      
+      terra::writeRaster(temp, 
+                         paste0("~/McGill University/Laura's Lab_Group - range-coverage/",taxagroups[t],"/", species[i], ".tif"), overwrite=T)
+    }, error = function(e) {
+      message("An error occurred: ", e$message)
+      return(NA) # Return NA if an error occurs
+    })
+  }
+}
