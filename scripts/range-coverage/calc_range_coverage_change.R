@@ -8,7 +8,7 @@
 # filepath = paste0("~/McGill University/Laura's Lab_Group - IUCN Ranges/Unclipped/EASE2.0_12.5km/", taxagroups[1], "/")
 # range = terra::rast(paste0(filepath, species_name, ".tif"))
 
-calc_range_coverage_change = function(species_name, range, inat = inat_pq, new_data){
+calc_range_coverage_change = function(species_name, range, inat = inat_pq){
   
   # choose a species
   # sp = "Panax quinquefolius"
@@ -40,11 +40,6 @@ calc_range_coverage_change = function(species_name, range, inat = inat_pq, new_d
     terra::crop(range_can, mask = TRUE, touches = FALSE)
 
   # Make an "after" raster -----------------------------------------------------
-  
-  # get new inat obs from BTG
-  # btg.occ <- new_data |>
-  #   dplyr::filter(scientific_name == species_name) |>
-  #   select(c(longitude, latitude, scientific_name))
   
   btg.occ <- rinat::get_inat_obs(taxon_name = species_name, 
                           year = 2025, 
