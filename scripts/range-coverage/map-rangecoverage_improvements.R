@@ -54,8 +54,59 @@ for(t in 1:length(taxagroups)){
   terra::writeRaster(rast.sum, paste0("outputs/range-coverage/summary-results/map_upgradedcells_sumspecies_",taxagroups[t],".tif"), overwrite = TRUE)
 }
 
-
 # read them back in to make plots and a full summary stack
-temp = terra::rast(paste0("outputs/range-coverage/summary-results/map_upgradedcells_sumspecies_",taxagroups[t],".tif"))
-plot(rast.sum)
-mapview::mapview(temp)
+all = lapply(taxagroups, function(x) terra::rast(paste0("outputs/range-coverage/summary-results/map_upgradedcells_sumspecies_",x,".tif")))
+names(all) = taxagroups
+all.resamp = lapply(all, resample, canada, method = "sum")
+# stack 'em
+all.stack = terra::rast(all.resamp)
+
+# sum stacked rasters (giving: new cell coverage for X number of species)
+all.sum = sum(all.stack, na.rm = T)
+all.sum = round(all.sum)
+
+# plot to check it out
+plot(all.sum)
+mapview::mapview(all.sum)
+
+# remove zeros
+all.sum.nozeros = all.sum
+all.sum.nozeros[all.sum.nozeros==0] <- NA
+# save
+terra::writeRaster(all.sum.nozeros, paste0("outputs/range-coverage/summary-results/map_upgradedcells_sumspecies_all.tif"), overwrite = TRUE)
+
+# interactive map
+mapview::mapviewOptions(basemaps = "OpenStreetMap",
+               na.color = "transparent")
+
+# plot it!
+pal = viridis::turbo(5)
+(m = mapview::mapview(all.sum.nozeros, 
+        col.regions = pal,
+        layer.name = "Species with new sightings", 
+        na.color = "transparent") )
+htmlwidgets::saveWidget(m@map, 
+                        file = "outputs/range-coverage/interactive/allgroups_newsightings.html",
+                        selfcontained = TRUE)
+
+# tiles = makeTiles(all.sum.nozeros, "outputs/range-coverage/summary-results/map_upgradedcells_sumspecies_all")
+# library(mapgl)
+# maplibre(
+#   #maptiler_style("satellite"),   # base map style
+#   center = c(-101, 62),     # center-ish of Canada
+#   zoom = 1.6) |>
+#   
+#   # set to globe for the sphere look
+#   set_projection("globe") |> 
+#   
+#   # Add the GBIF raster tile layer
+#   mapgl::add_image_source(
+#     id = "upgraded-doverage",
+#     data = all.sum.nozeros$sum
+#   ) |>
+#   # Add the raster layer to the map
+#   mapgl::add_raster_layer(
+#     id = "coverage-layer",
+#     source = "upgraded-doverage",
+#     raster_opacity = 1,
+#     raster_fade_duration = 0)
