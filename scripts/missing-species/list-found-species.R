@@ -61,6 +61,7 @@ df = df[-which(df$scientific_name %in% to.remove),]
 
 # how many missing species were found?
 new.sp = df |>
+  filter(quality_grade == "research") |>
   group_by(iconic_taxon_name, scientific_name) |>
   summarise("n" = n())
 
@@ -69,24 +70,70 @@ df = df[-which(df$scientific_name== "Boechera polyantha"),]
 
 # how many missing species were found? (with corrected species list)
 new.sp = df |>
+  filter(quality_grade == "research") |>
   group_by(iconic_taxon_name, scientific_name) |>
   summarise("n" = n())
 
+# how many species per group?
 new.groups = new.sp |>
   group_by(iconic_taxon_name) |>
   summarise("n" = n())
 
-# who saw these first (research-grade) ?
+# reorder for plotting
+new.groups$iconic_taxon_name = factor(new.groups$iconic_taxon_name,
+                                      levels = new.groups$iconic_taxon_name[order(new.groups$n)])
+total.sp = sum(new.groups$n)
+ggplot(data = new.groups) +
+  geom_bar(aes(
+    y = iconic_taxon_name,
+    x = n,
+    fill = iconic_taxon_name
+  ), stat = "identity", position = "dodge") +
+  geom_text(aes(
+    y = iconic_taxon_name,
+    label = n,
+    x = n,
+    col = iconic_taxon_name
+  ), size = 5,  hjust = -.2,fontface = "bold") +
+  colorspace::scale_fill_discrete_qualitative() +
+  colorspace::scale_color_discrete_qualitative() +
+  labs(y = "", 
+       x = "Species found",
+       title = paste0("Missing species found this summer: ", total.sp, " ")) +
+  hrbrthemes::theme_ipsum_rc(base_size = 14,
+                             axis_title_size = 14,
+                             axis_title_face = "bold") +
+  theme(legend.position = "none",
+        panel.grid.major.y = element_blank()) +
+  coord_cartesian(xlim = c(0,100))
+ggsave("figures/missing-species-pergroup_researchgrade.png", width = 7.61, height = 4.71)
 
-found = new.sp$scientific_name[-which(new.sp$flag)] |> unique() |> length() # 373!
+
+# who saw these first (research-grade) ? ---------------------------------------
 
 finders = df |>
+  filter(quality_grade == "research") |>
   group_by(user_login) |>
-  summarise("n" = n())
+  distinct(scientific_name) |>
+  summarise("n_sp" = n())
+
+finders$name = NA
+names.finders = list()
+for(n in 1:nrow(finders)){
+  names.finders[[n]] = rinat::get_inat_user_stats(uid = finders$user_login[n])
+}
+finders$name = names.finders
+
+finders.rg = df |>
+  filter(quality_grade == "research") |>
+  group_by(user_login) |>
+  distinct(scientific_name) |>
+  summarise("n_sp" = n())
+
+finders2 = df |>
+  group_by(user_login, scientific_name, quality_grade) |>
+  summarise("n_obs" = n())
 
 temp = rinat::get_inat_user_stats(uid = "kalvinchan")
 temp$most_observations$user$name
-
-btg_info = get_inat_obs_project("blitz-the-gap", type = "info", raw = FALSE)
-temp2 = rinat::get_inat_user_stats(project = btg_info$id,)
 
