@@ -88,6 +88,10 @@ pal = viridis::turbo(5)
 htmlwidgets::saveWidget(m@map, 
                         file = "outputs/range-coverage/interactive/allgroups_newsightings.html",
                         selfcontained = TRUE)
+# published to RPubs
+# https://rpubs.com/blitzthegap/newsightings
+
+
 
 # tiles = makeTiles(all.sum.nozeros, "outputs/range-coverage/summary-results/map_upgradedcells_sumspecies_all")
 # library(mapgl)
