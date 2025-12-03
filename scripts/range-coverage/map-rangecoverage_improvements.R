@@ -75,6 +75,9 @@ all.sum.nozeros[all.sum.nozeros==0] <- NA
 # save
 terra::writeRaster(all.sum.nozeros, paste0("outputs/range-coverage/summary-results/map_upgradedcells_sumspecies_all.tif"), overwrite = TRUE)
 
+# read in the raster
+all.sum.nozeros = terra::rast(paste0("outputs/range-coverage/summary-results/map_upgradedcells_sumspecies_all.tif"))
+
 # interactive map
 mapview::mapviewOptions(basemaps = "OpenStreetMap",
                na.color = "transparent")
@@ -92,6 +95,14 @@ htmlwidgets::saveWidget(m@map,
 # https://rpubs.com/blitzthegap/newsightings
 
 
+df = project(all.sum.nozeros, crs(canada))
+
+ggplot() +
+  geom_sf(data = sf::st_as_sf(canada_poly), col = "grey90", fill = "grey90") +
+  stars::geom_stars(data = stars::st_as_stars(df)) +
+  scale_fill_viridis_c(option = "turbo", na.value = "transparent") +
+  labs(fill = "Newly sighted species") +
+  theme_void()
 
 # tiles = makeTiles(all.sum.nozeros, "outputs/range-coverage/summary-results/map_upgradedcells_sumspecies_all")
 # library(mapgl)

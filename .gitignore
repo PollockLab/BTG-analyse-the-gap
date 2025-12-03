@@ -49,3 +49,7 @@ po/*~
 rsconnect/
 /data/heavy
 BTG-analyse-the-gap.Rproj
+/figures/gained_coverage_relativepercentage_files
+/outputs/range-coverage/interactive/allgroups_newsightings_files
+/data/base-layers
+/data/richness-maps
