@@ -33,7 +33,7 @@ plot(sc)
 
 user.samp = users |>
   group_by(category) |>
-  slice_sample(n = 10) # select 10 random users per group
+  slice_sample(n = 100) # select 10 random users per group
 
 # filter the parquet file to these users
 
@@ -52,6 +52,7 @@ user.inat <- inat_pq |>
 
 # assign categories to each user
 user.inat = left_join(user.inat, select(users, c(user_login, category)))
+
 
 # Find some grid cells to train the rarefaction curve on -----------------------
 
@@ -82,7 +83,7 @@ cellCats = obs_cells |> group_by(cell) |> summarise("n_cat" = length(unique(cate
 cellSR = obs_cells |> group_by(cell) |> summarise("n_sp" = length(unique(scientific_name)))
 
 # choose cells that have at least 4 categories of user types, for better comparison
-cells.multicat = cellCats[which(cellCats$n_cat >= 4),]
+cells.multicat = cellCats[which(cellCats$n_cat >= 5),]
 
 # choose top 10 cells by number of observations
 cells = cellObs |>
@@ -92,13 +93,13 @@ cells = cellObs |>
 
 ## Rarefy observations in each cell --------------------------------------------
 
-# function for a rarefaction curve to apply per cell, per user group
+# function for a rarefaction curve to apply per cell, per user group -----------
 
-rarefy_groups = function(user.inat = user.inat, user_category, cell_index){
+rarefy_groups = function(data = user.inat, data_cells = cells, user_category, cell_index){
   
   # choose a cell
-  temp = user.inat |> 
-    dplyr::filter(cell == cells$cell[cell_index]) |> # cell index goes here
+  temp = data |> 
+    dplyr::filter(cell == data_cells$cell[cell_index]) |> # cell index goes here
     group_by(category, user_login, scientific_name) |>
     summarise("total_obs" = n())
   
@@ -107,11 +108,14 @@ rarefy_groups = function(user.inat = user.inat, user_category, cell_index){
     dplyr::filter(category == user_category) |> # this is where the user category goes
     group_by(user_login) |>
     group_split() |>
-    as.list() |>
+    as.list() 
+  names(temp2) = lapply(temp2, function(x) return(unique(x[,colnames(x) == "user_login"]))) |> unlist()
+  
+  temp2 = temp2 |>
     lapply(select, c(total_obs)) |>
     lapply(as.vector) |>
     lapply(unlist)
-  
+    
   # remove sites with less than 5 species
   index = unlist(lapply(temp2, length))
   temp2 = temp2[which(index>=5)]
@@ -123,16 +127,120 @@ rarefy_groups = function(user.inat = user.inat, user_category, cell_index){
   
 }
 
-ac_superuser = vector("list", 10)
-for(i in 1:10){
-  ac_superuser[[i]] = rarefy_groups("superuser", i)
-  ggiNEXT(ac_superuser[[i]], type = 1,) + hrbrthemes::theme_ipsum_pub()
+# function to run this for each user category ----------------------------------
+
+run_rarefaction = function(CATEGORY){
+  ac = vector("list", length(cells$cell))
+  names(ac) = cells$cell
+  for(i in 1:10){
+    tryCatch({
+      ac[[i]] = rarefy_groups(user_category = CATEGORY, 
+                                         cell_index =  i)
+      ggiNEXT(ac[[i]], type = 1,) + 
+        hrbrthemes::theme_ipsum_pub()
+      ggsave(paste0("figures/usertype_comparisons/rarefaction-curves/by-user-group/",CATEGORY, "_", i,".png"),
+             width = 6, height = 6)
+    }, error = function(e) {ac[[i]] = NA} )
+  }
+  return(ac)
 }
 
+# run!!
+ac_superuser = run_rarefaction("superuser")
+ac_expert = run_rarefaction("expert")
+ac_enthusiast = run_rarefaction("enthusiast")
+ac_dabbler = run_rarefaction("dabbler")
+ac_casual = run_rarefaction("casual")
 
-ac_expert = vector("list", 10)
-for(i in 1:10){
-  ac_expert[[i]] = rarefy_groups(user_category = "expert", cell_index =  i)
-  ggiNEXT(ac_expert[[i]], type = 1,) + hrbrthemes::theme_ipsum_pub()
-  ggsave("figures/usertype_comparisons/rarefaction-curves/by-user-group/expert_",i,".png")
+ac = list(ac_superuser, ac_expert, ac_enthusiast, ac_dabbler, ac_casual)
+saveRDS(ac, "outputs/users/usergroups_rarefactions.rds")
+
+## Fit a model to these curves -------------------------------------------------
+
+# function to extract asymptotes of the curves -----
+
+cell_Asy = function(ac_usergroup){
+  
+  asy = vector("list", length(ac_usergroup))
+  names(asy) = names(ac_usergroup)
+
+  for(i in 1:length(ac_usergroup)){
+    
+    tryCatch({
+      
+    asy[[i]] = ac_usergroup[[i]]$AsyEst |> 
+      filter(Diversity == "Species richness") |>
+      arrange(-Observed)
+    }, error = function(e) {asy[[i]] = NA})
+  }
+    
+  asy = asy |> bind_rows(.id = "cell")
+  
+  return(asy)
+}
+
+# apply to the iNEXT results
+asy = lapply(ac, cell_Asy)
+names(asy) = c("superuser", "expert", "enthusiast", "dabbler", "casual")
+asy = bind_rows(asy, .id = "category")
+
+
+# Model and predict the rarefaction curves -------------------------------------
+
+# function to extract sample coverage from the iNEXT results
+
+cell_SC = function(ac_usergroup){
+  
+  sc = vector("list", length(ac_usergroup))
+  names(sc) = names(ac_usergroup)
+  
+  for(i in 1:length(ac_usergroup)){
+    
+    tryCatch({
+      
+      sc[[i]] = ac_usergroup[[i]]$iNextEst$coverage_based |> 
+        filter(SC >= 0.5) |>
+        group_by(Assemblage) |>
+        slice_head() |>
+        mutate("coverage" = "50%")
+    }, error = function(e) {sc[[i]] = NA})
+  }
+  
+  sc = sc |> bind_rows(.id = "cell")
+  
+  return(sc)
+}
+
+# apply to the results
+sc = lapply(ac, cell_SC)
+names(sc) = c("superuser", "expert", "enthusiast", "dabbler", "casual")
+sc = bind_rows(sc, .id = "category")
+
+# plot the lines!
+ggplot(data = sc) +
+  geom_point(aes(y = qD, x = m, col = category, fill = category)) +
+  geom_smooth(aes(y = qD, x = m, col = category, fill = category), 
+              method = "loess", se = T) +
+  labs(y = "Estimated total SR", 
+       x = "Number of observations")
+
+
+
+
+# Fit a GAM to the accumulation curves ========================================
+
+## this is where i need to edit 
+# model the curves
+m50 = mgcv::gam(m ~ s(qD), data = SC_obsneeded_cov50)
+
+rz_m = list(m50, m75, m90, m100)
+
+# function to predict the number of observations needed to find the expected SR
+# given the rarefaction curves modelled above
+rz_effort = function(SR){
+  x = lapply(rz_m, predict, newdata = data.frame("qD" = SR)) |>
+    rbind() |>
+    as.data.frame() 
+  colnames(x) = c("p50", "p75", "p90", "p100")
+  return(x)
 }
