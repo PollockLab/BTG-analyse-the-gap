@@ -93,6 +93,40 @@ cells = cellObs |>
 
 ## Rarefy observations in each cell --------------------------------------------
 
+# rarefy per cell, no user group separation -=-----
+
+rarefy_cells = function(data = user.inat, data_cells = cells, cell_index){
+  
+  # choose a cell
+  temp = data |> 
+    dplyr::filter(cell == data_cells$cell[cell_index]) |> # cell index goes here
+    group_by(category, user_login, scientific_name) |>
+    summarise("total_obs" = n())
+  
+  # prepare data for rarefaction
+  temp2 = temp |>
+    group_by(user_login) |>
+    group_split() |>
+    as.list() 
+  names(temp2) = lapply(temp2, function(x) return(unique(x[,colnames(x) == "user_login"]))) |> unlist()
+  
+  temp2 = temp2 |>
+    lapply(select, c(total_obs)) |>
+    lapply(as.vector) |>
+    lapply(unlist)
+  
+  # remove sites with less than 5 species
+  index = unlist(lapply(temp2, length))
+  temp2 = temp2[which(index>=5)]
+  
+  # rarefaction
+  out_cell = iNEXT(temp2, q = 0, datatype = "abundance")
+  
+  return(out_cell)
+  
+}
+
+
 # function for a rarefaction curve to apply per cell, per user group -----------
 
 rarefy_groups = function(data = user.inat, data_cells = cells, user_category, cell_index){
@@ -126,6 +160,44 @@ rarefy_groups = function(data = user.inat, data_cells = cells, user_category, ce
   return(out_cell)
   
 }
+
+
+
+ac_cells = list()
+
+ac_cells[[1]] = rarefy_cells(cell_index = 1)
+ggiNEXT(ac_cells[[1]]) +
+  theme(legend.position = "none") +
+  coord_cartesian(xlim = c(0,100), ylim = c(0,150))
+ggiNEXT(ac_cells[[1]]) +
+  theme(legend.position = "none") +
+  coord_cartesian(xlim = c(0,1000), ylim = c(0,500))
+ggiNEXT(ac_cells[[1]]) +
+  theme(legend.position = "none") +
+  coord_cartesian(xlim = c(0,10000), ylim = c(0,1500))
+ggiNEXT(ac_cells[[1]]) +
+  theme(legend.position = "none") 
+
+obs_SR = ac_cells[[1]]$iNextEst$size_based |>
+  filter(Method == "Observed")
+ggplot(data = obs_SR) +
+  geom_point(aes(x = m, y = qD))
+ggplot(data = obs_SR) +
+  geom_point(aes(x = m, y = SC)) +
+  scale_x_sqrt()
+
+
+
+# run!!
+ac_superuser = run_rarefaction("superuser")
+ac_expert = run_rarefaction("expert")
+ac_enthusiast = run_rarefaction("enthusiast")
+ac_dabbler = run_rarefaction("dabbler")
+ac_casual = run_rarefaction("casual")
+
+ac = list(ac_superuser, ac_expert, ac_enthusiast, ac_dabbler, ac_casual)
+saveRDS(ac, "outputs/users/usergroups_rarefactions.rds")
+
 
 # function to run this for each user category ----------------------------------
 
@@ -219,12 +291,32 @@ sc = bind_rows(sc, .id = "category")
 # plot the lines!
 ggplot(data = sc) +
   geom_point(aes(y = qD, x = m, col = category, fill = category)) +
-  geom_smooth(aes(y = qD, x = m, col = category, fill = category), 
+  geom_smooth(aes(y = qD, x = m, col = category, fill = category),
               method = "loess", se = T) +
   labs(y = "Estimated total SR", 
-       x = "Number of observations")
+       x = "Number of observations",
+       title = "Average across 10 selected cells",
+       caption = "Selected cells = Top 10 high obs + all 5 observers categories") +
+  colorspace::scale_color_discrete_qualitative() +
+  scale_y_sqrt()+
+  theme(legend.position = "right")
 
 
+# zoom in to the first 1000 observations
+
+ggplot(data = sc) +
+  geom_point(aes(y = qD, x = m, col = category, fill = category)) +
+  geom_smooth(aes(y = qD, x = m, col = category, fill = category),
+              method = "loess", se = T) +
+  labs(y = "Estimated total SR", 
+       x = "Number of observations",
+       title = "Average across 10 selected cells\n(Zoom: 1-1000 observations)",
+       caption = "Selected cells = Top 10 high obs + all 5 observers categories") +
+  colorspace::scale_color_discrete_qualitative() +
+  scale_y_sqrt()+
+  theme(legend.position = "right",
+        panel.grid.major = element_line(size = .3)) +
+  coord_cartesian(xlim = c(0,1000))
 
 
 # Fit a GAM to the accumulation curves ========================================
