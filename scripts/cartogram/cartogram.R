@@ -67,9 +67,16 @@ df_cartogram_raw <- cartogram_cont(sum_df, "n_obs", itermax = 50)
 
 # plot
 ggplot() +
-  geom_sf(data = st_as_sf(ecoreg), linewidth = .1, fill = colorspace::sequential_hcl(palette = "BuGn",5)[5]) +
+  geom_sf(data = st_as_sf(ecoreg), 
+          aes(fill = n_obs),
+          linewidth = .1) +
+  labs(fill = "Observations") +
   colorspace::scale_fill_continuous_sequential("BuGn") +
-  theme_void() 
+  theme_void() +
+  theme(legend.position = "bottom", 
+        legend.key.width = unit(2, "cm"),
+        legend.text = element_text(family = "Open Sans"),
+        legend.title = element_text(family = "Open Sans", face = "bold"))
 ggsave("figures/cartograms/map_ecoregions_original.png", width = 8, height = 6)
 
 ggplot(df_cartogram_raw) +
@@ -81,4 +88,4 @@ ggplot(df_cartogram_raw) +
         legend.key.width = unit(2, "cm"),
         legend.text = element_text(family = "Open Sans"),
         legend.title = element_text(family = "Open Sans", face = "bold"))
-ggsave("figures/cartograms/map_ecoregions_nobs.png", width = 8, height = 6.1)
+ggsave("figures/cartograms/map_ecoregions_nobs.png", width = 8, height = 6)
