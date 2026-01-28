@@ -46,7 +46,7 @@ inat = terra::crop(inat, canada, mask = TRUE)
 inat = project(inat, "epsg:4326")
 
 # load ecoregions and project
-ecoreg = st_read("~/Desktop/Ecoregions/ecoregions.shp")
+ecoreg = st_read("data/base-layers/ecoregions.shp")
 ecoreg = st_transform(ecoreg, crs = "epsg:4326")
 st_write(ecoreg, "data/base-layers/ecoregions.shp", append = FALSE)
 ecoreg = vect("data/base-layers/ecoregions.shp")
@@ -63,11 +63,14 @@ sum_df$n_obs = sum_df$All_density_inat_1km.tif
 
 # make a cartogram
 sum_df = st_transform(sum_df, crs(canada))
+saveRDS(sum_df, "outputs/cartogram/sum_df_pre2025.rds")
+
+# calculate cartogram 
 df_cartogram_raw <- cartogram_cont(sum_df, "n_obs", itermax = 50)
 
 # plot
 ggplot() +
-  geom_sf(data = st_as_sf(ecoreg), 
+  geom_sf(data = st_as_sf(sum_df), 
           aes(fill = n_obs),
           linewidth = .1) +
   labs(fill = "Observations") +

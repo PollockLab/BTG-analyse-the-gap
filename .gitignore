@@ -53,3 +53,6 @@ BTG-analyse-the-gap.Rproj
 /outputs/range-coverage/interactive/allgroups_newsightings_files
 /data/base-layers
 /data/richness-maps
+/outputs/richnessmaps
+/outputs/densitymaps
+/outputs/comparison-maps
