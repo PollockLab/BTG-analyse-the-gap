@@ -11,23 +11,31 @@ library(taxize)
 library(rinat)
 
 # load parquet
-inat_pq <- arrow::open_dataset("~/McGill University/Laura's Lab_Group - BioBlitz/data/raw/biodiversity-data/inat-canada/iNat_non_sensitive_data_Jan2025.parquet")
+df <- arrow::open_dataset("data/heavy/BTG-data/inaturalist-canada-dec2025.parquet")
 
-# get iNat project IDs
-btg_info = get_inat_obs_project("blitz-the-gap", type = "info", raw = FALSE)
+# make a dataset without 2025
+df_no2025 = df |> dplyr::filter(!grepl("2025", observed_on_string))
 
 
 ## Before BTG ==================================================================
 
 # Count number of observations per species, per taxa group
-n_obs <- inat_pq |> 
+n_obs <- df_no2025 |> 
   dplyr::filter(captive_cultivated == FALSE,
-                quality_grade == "research") |> 
+                quality_grade == "research",
+                place_country_name == "Canada") |> 
   group_by(iconic_taxon_name, scientific_name) |>
   summarize(total_obs = n()) |> 
   # load the query into our R session
   collect()
-
+# retain taxa that have two words in the name, i.e. that are species or lower level
+n_obs$species_level <- strsplit(n_obs$scientific_name,split = " ") |> 
+  lapply(length) |> 
+  unlist()
+# convert to true/false
+n_obs$species_level = n_obs$species_level>1
+# filter to minimum species-level obs
+n_obs = filter(n_obs, species_level == TRUE)
 which(n_obs$total_obs >= 1) |> length()
 which(n_obs$total_obs >= 10) |> length()
 which(n_obs$total_obs >= 30) |> length()
@@ -35,28 +43,28 @@ which(n_obs$total_obs >= 100) |> length()
 
 ## After BTG ===================================================================
 
-# get taxa information from the Blitz the Gap project
-# btg_taxa = get_inat_taxon_stats(project = btg_info$id,
-#                                 date_range = c("2025-04-01", 
-#                                                # today's date
-#                                                paste0(Sys.Date())))
+# Count number of observations per species, per taxa group
+n_obs.2025 <- df |> 
+  dplyr::filter(captive_cultivated == FALSE,
+                quality_grade == "research",
+                place_country_name == "Canada") |> # blitz the gap months
+  group_by(iconic_taxon_name, scientific_name) |>
+  summarize(total_obs = n()) |> 
+  # load the query into our R session
+  collect()
+# retain taxa that have two words in the name, i.e. that are species or lower level
+n_obs.2025$species_level <- strsplit(n_obs.2025$scientific_name,split = " ") |> 
+  lapply(length) |> 
+  unlist()
+# convert to true/false
+n_obs.2025$species_level = n_obs.2025$species_level>1
+# filter to minimum species-level obs
+n_obs.2025 = filter(n_obs.2025, species_level == TRUE)
 
-
-# so this is a conservative estimate of new data... the rinat package isn't
-# well suited to download obs per project, so I will have to go with 
-# research-grade observations summarised using rgbif
-
-new_obs = n_obs
-new_obs$btg_obs = NA
-
-for(i in 1:nrow(new_obs)){
-  new_obs$btg_obs[i] = rgbif::occ_count(scientificName = n_obs$scientific_name[i],
-                                        country = "CA",
-                                        year = 2025,
-                                        month = "4;5;6;7;8;9",
-                                        datasetKey = "50c9509d-22c7-4a22-a47d-8c48425ef4a7")
-}
-saveRDS(new_obs, "outputs/n_observations/n_obs_btg_15092025.rds")
+which(n_obs.2025$total_obs >= 1) |> length()
+which(n_obs.2025$total_obs >= 10) |> length()
+which(n_obs.2025$total_obs >= 30) |> length()
+which(n_obs.2025$total_obs >= 100) |> length()
 
 
 # Compare before and after BTG =================================================
@@ -77,11 +85,10 @@ pre.btg = pre.btg |>
 
 # After
 
-post.btg = new_obs
-post.btg$new_total = post.btg$total_obs + post.btg$btg_obs
-post.btg$min10 = post.btg$new_total >= 10
-post.btg$min30 = post.btg$new_total >= 30
-post.btg$min100 = post.btg$new_total >= 100
+post.btg = n_obs.2025
+post.btg$min10 = post.btg$total_obs >= 10
+post.btg$min30 = post.btg$total_obs >= 30
+post.btg$min100 = post.btg$total_obs >= 100
 
 post.btg = post.btg |>
   group_by(iconic_taxon_name) |>
@@ -93,6 +100,7 @@ post.btg = post.btg |>
 btg = left_join(pre.btg, post.btg, 
                 by = "iconic_taxon_name",
                 suffix = c(".pre", ".post"))
-saveRDS(btg, "outputs/n_observations/n_obs_btg_15092025_summary.rds")
+saveRDS(btg, "outputs/n_observations/n_obs_btg_summary.rds")
 
 # Plotting is done in plot_n_observations.R
+

@@ -1,17 +1,14 @@
 # Script to plot the gains in number of species per taxa with at least 1, 10, 30, or 100 observations
 
 # libraries
-library(rgbif)
 library(ggplot2)
 library(dplyr)
 library(arrow)
 library(dbplyr, warn.conflicts = FALSE)
 library(duckdb)
-library(taxize)
-library(rinat)
 
 # load data
-btg = readRDS("outputs/n_observations/n_obs_btg_15092025_summary.rds")
+btg = readRDS("outputs/n_observations/n_obs_btg_summary.rds")
 btg = filter(btg, !is.na(iconic_taxon_name))
 
 # set ggplot theme
@@ -91,30 +88,6 @@ ggplot(data = btg_temp,
 ggsave("figures/n_observations/min100_proportionoftotalspecies_labelledn.png", width = 7, height = 6.21)
 
 
-# Relative gain within species that have 100 observations ----------------------
-
-(pp = ggplot(data = btg_temp) +
-    geom_bar(aes(y = iconic_taxon_name, 
-                 x = 100,
-                 fill = iconic_taxon_name),
-             stat = "identity", 
-             alpha = 1) +
-    geom_bar(aes(y = iconic_taxon_name, 
-                 x = 100*n_min100.pre/n_min100.post),
-             stat = "identity",
-             fill = "grey20") +
-    geom_text(aes(label = gsub("%", "", Percentage), x = 99.5, y = iconic_taxon_name), 
-              size = 5,  hjust = 1, color = "white") +
-    colorspace::scale_color_discrete_qualitative() +
-    labs(x = "Species with > 100 observations (%)", 
-         y = "",
-         title = "Getting species to >100 observations!",
-         subtitle = "Proportion of the species that reached 100 observations during Blitz the Gap.") +
-    theme(legend.position = "none",
-          panel.grid.major.y = element_blank()))
-ggsave("figures/n_observations/min100_proportionofspecieswith100.png", width = 7, height = 6.21)
-
-
 # Basic number of species with 100 obs plot ------------------------------------
 
 btg_temp$iconic_taxon_name = factor(btg_temp$iconic_taxon_name,
@@ -139,7 +112,7 @@ btg_temp$iconic_taxon_name = factor(btg_temp$iconic_taxon_name,
 ggsave("figures/n_observations/min100_numberofspecies.png", width = 7, height = 6.21)
 
 ## count number of species that have at least 100 obs now!
-btg_temp$diff |> sum()
+btg_temp$diff |> sum() # 589
 
 
 
@@ -242,7 +215,7 @@ btg_temp$iconic_taxon_name = factor(btg_temp$iconic_taxon_name,
 ggsave("figures/n_observations/min10_numberofspecies.png", width = 7, height = 6.21)
 
 ## count number of species that have at least 100 obs now!
-btg_temp$diff |> sum()
+btg_temp$diff |> sum() # 842
 
 
 # Minimum 30 observations ------------------------------------------------------
@@ -344,4 +317,4 @@ btg_temp$iconic_taxon_name = factor(btg_temp$iconic_taxon_name,
 ggsave("figures/n_observations/min30_numberofspecies.png", width = 7, height = 6.21)
 
 ## count number of species that have at least 100 obs now!
-btg_temp$diff |> sum()
+btg_temp$diff |> sum() # 709
