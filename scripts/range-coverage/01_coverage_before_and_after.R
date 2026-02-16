@@ -17,12 +17,15 @@ library(mapview)
 theme_set(hrbrthemes::theme_ipsum_rc())
 
 # load range coverage function
-source("scripts/range-coverage/calc_range_coverage_change.R")
+source("scripts/range-coverage/calc_range_coverage_change_parquetversion.R")
 
 # list of taxa groups
 taxagroups = list.files("~/McGill University/Laura's Lab_Group - IUCN Ranges/Unclipped/EASE2.0_12.5km/")
 inatgroups = c("Amphibia", "Aves", "Insecta", "Mammalia", "Plantae", "Reptilia")
 
+# let's not do birds:
+taxagroups = taxagroups[-2]
+inatgroups = inatgroups[-2]
 
 # Load the databases ===========================================================
 
@@ -35,14 +38,14 @@ canada = terra::aggregate(canada, factor = 2) # 10 km^2 cells
 canada = terra::project(canada, "EPSG:6933")
 
 # load parquet
-inat_pq <- arrow::open_dataset("~/McGill University/Laura's Lab_Group - BioBlitz/data/raw/biodiversity-data/inat-canada/iNat_non_sensitive_data_Jan2025.parquet")
+inat_pq = arrow::open_dataset("data/heavy/BTG-data/inaturalist-canada-dec2025_smaller.parquet")
 
 # list of species to calculate range coverage for
 df = lapply(as.list(paste0("outputs/range-coverage/range_coverage_", taxagroups, ".rds")), readRDS)
 names(df) = taxagroups
 df = bind_rows(df, .id = "Taxa")
 
-for(t in c(1:4,6)){
+for(t in c(1:3,5)){
 
   # Load species names that have previously been included
   species = dplyr::filter(df, Taxa == taxagroups[t]) |>
@@ -56,8 +59,8 @@ for(t in c(1:4,6)){
     tryCatch({  
     temp = calc_range_coverage_change(species_name = species[i], 
                                range = terra::rast(paste0(filepath, species[i], ".tif")),
-                               inat = inat_pq#, 
-                               #new_data = newdata
+                               inat = inat_pq,
+                               YEAR = "2025"
                                )
     
     terra::writeRaster(temp, 
@@ -71,7 +74,7 @@ for(t in c(1:4,6)){
 
 ## Plants version
 
-for(t in c(5)){
+for(t in c(4)){
   
   # Load species names that have previously been included
   species = dplyr::filter(df, Taxa == taxagroups[t]) |>
@@ -94,7 +97,8 @@ for(t in c(5)){
       
       temp = calc_range_coverage_change(species_name = species[i], 
                                         range = range_rast,
-                                        inat = inat_pq
+                                        inat = inat_pq, 
+                                        YEAR = "2025"
       )
       
       terra::writeRaster(temp, 
