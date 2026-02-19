@@ -14,7 +14,6 @@ btg = filter(btg, !is.na(iconic_taxon_name))
 # set ggplot theme
 theme_set(hrbrthemes::theme_ipsum_rc())
 
-
 # Prepare data for plotting
 btg_temp = filter(btg, !is.na(iconic_taxon_name))
 btg_temp = btg_temp |>
@@ -50,8 +49,7 @@ ggplot(data = btg_temp,
   colorspace::scale_color_discrete_qualitative() +
   labs(x = "Species (%)", 
        y = "",
-       title = "Getting species to >100 observations!",
-       subtitle = "Species that reached 100 observations during Blitz the Gap.") +
+       title = "Species that reached 100 observations") +
   theme(legend.position = "none",
         panel.grid.minor = element_blank())
 ggsave("figures/n_observations/min100_proportionoftotalspecies.png", width = 7, height = 6.21)
@@ -81,8 +79,7 @@ ggplot(data = btg_temp,
   colorspace::scale_color_discrete_qualitative() +
   labs(x = "Species (%)", 
        y = "",
-       title = "Getting species to >100 observations!",
-       subtitle = "Species that reached 100 observations during Blitz the Gap.") +
+       title = "Species that reached 100 observations") +
   theme(legend.position = "none",
         panel.grid.minor = element_blank())
 ggsave("figures/n_observations/min100_proportionoftotalspecies_labelledn.png", width = 7, height = 6.21)
@@ -105,8 +102,7 @@ btg_temp$iconic_taxon_name = factor(btg_temp$iconic_taxon_name,
     scale_x_sqrt() +
     labs(x = "Species", 
          y = "",
-         title = "Getting species to >100 observations!",
-         subtitle = "Species that reached 100 observations during Blitz the Gap.") +
+         title = "Species that reached 100 observations") +
     theme(legend.position = "none",
           panel.grid.major.y = element_blank()))
 ggsave("figures/n_observations/min100_numberofspecies.png", width = 7, height = 6.21)
@@ -153,8 +149,7 @@ ggplot(data = btg_temp,
   colorspace::scale_color_discrete_qualitative() +
   labs(x = "Species (%)", 
        y = "",
-       title = "Getting species to >30 observations!",
-       subtitle = "Species that reached 30 observations during Blitz the Gap.") +
+       title = "Species that reached 10 observations") +
   theme(legend.position = "none",
         panel.grid.minor = element_blank())
 ggsave("figures/n_observations/min10_proportionoftotalspecies.png", width = 7, height = 6.21)
@@ -184,8 +179,7 @@ ggplot(data = btg_temp,
   colorspace::scale_color_discrete_qualitative() +
   labs(x = "Species (%)", 
        y = "",
-       title = "Getting species to >30 observations!",
-       subtitle = "Species that reached 30 observations during Blitz the Gap.") +
+       title = "Species that reached 10 observations") +
   theme(legend.position = "none",
         panel.grid.minor = element_blank())
 ggsave("figures/n_observations/min10_proportionoftotalspecies_labelledn.png", width = 7, height = 6.21)
@@ -208,8 +202,7 @@ btg_temp$iconic_taxon_name = factor(btg_temp$iconic_taxon_name,
     scale_x_sqrt() +
     labs(x = "Species", 
          y = "",
-         title = "Getting species to >30 observations!",
-         subtitle = "Species that reached 30 observations during Blitz the Gap.") +
+    title = "Species that reached 10 observations") +
     theme(legend.position = "none",
           panel.grid.major.y = element_blank()))
 ggsave("figures/n_observations/min10_numberofspecies.png", width = 7, height = 6.21)
@@ -255,8 +248,7 @@ ggplot(data = btg_temp,
   colorspace::scale_color_discrete_qualitative() +
   labs(x = "Species (%)", 
        y = "",
-       title = "Getting species to >30 observations!",
-       subtitle = "Species that reached 30 observations during Blitz the Gap.") +
+       title = "Species that reached 30 observations") +
   theme(legend.position = "none",
         panel.grid.minor = element_blank())
 ggsave("figures/n_observations/min30_proportionoftotalspecies.png", width = 7, height = 6.21)
@@ -286,8 +278,7 @@ ggplot(data = btg_temp,
   colorspace::scale_color_discrete_qualitative() +
   labs(x = "Species (%)", 
        y = "",
-       title = "Getting species to >30 observations!",
-       subtitle = "Species that reached 30 observations during Blitz the Gap.") +
+       title = "Species that reached 30 observations") +
   theme(legend.position = "none",
         panel.grid.minor = element_blank())
 ggsave("figures/n_observations/min30_proportionoftotalspecies_labelledn.png", width = 7, height = 6.21)
@@ -310,8 +301,7 @@ btg_temp$iconic_taxon_name = factor(btg_temp$iconic_taxon_name,
     scale_x_sqrt() +
     labs(x = "Species", 
          y = "",
-         title = "Getting species to >30 observations!",
-         subtitle = "Species that reached 30 observations during Blitz the Gap.") +
+         title = "Species that reached 30 observations") +
     theme(legend.position = "none",
           panel.grid.major.y = element_blank()))
 ggsave("figures/n_observations/min30_numberofspecies.png", width = 7, height = 6.21)

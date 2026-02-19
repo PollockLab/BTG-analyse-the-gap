@@ -103,4 +103,3 @@ btg = left_join(pre.btg, post.btg,
 saveRDS(btg, "outputs/n_observations/n_obs_btg_summary.rds")
 
 # Plotting is done in plot_n_observations.R
-
