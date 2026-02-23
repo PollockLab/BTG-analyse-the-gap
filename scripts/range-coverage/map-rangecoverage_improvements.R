@@ -7,20 +7,27 @@ library(terra)
 library(gpkg)
 library(plotly)
 library(hrbrthemes)
+library(tidyterra)
 
 # set ggplot theme
 theme_set(hrbrthemes::theme_ipsum_rc())
 
 # load canada base grid
-canada = terra::rast("~/Documents/GitHub/ciee/blitz-the-gap/00_rawdata/base-layers/canada.base.5k.tiff")
+canada = terra::rast("data/base-layers/canada-basegrids/canada.base.5k.tiff")
 canada = terra::aggregate(canada, factor = 2) # 10 km^2 cells
+canada = project(canada, "EPSG:3347")
 
 # load canada polygon
-canada_poly = terra::vect("~/Documents/GitHub/ciee/blitz-the-gap/00_rawdata/base-layers/canada-polygon/canada.outline.shp")
+canada_poly = terra::vect("data/base-layers/canada-polygon/canada.outline.shp")
+canada_poly = project(canada_poly, "EPSG:3347")
 
 # list of taxa groups
 taxagroups = list.files("~/McGill University/Laura's Lab_Group - IUCN Ranges/Unclipped/EASE2.0_12.5km/")
 inatgroups = c("Amphibia", "Aves", "Insecta", "Mammalia", "Plantae", "Reptilia")
+
+# let's not do birds:
+taxagroups = taxagroups[-2]
+inatgroups = inatgroups[-2]
 
 # List range coverage rasters
 spp = lapply(as.list(paste0("~/McGill University/Laura's Lab_Group - range-coverage/",taxagroups,"/")), list.files)
@@ -36,11 +43,14 @@ for(t in 1:length(taxagroups)){
     as.matrix() |> as.vector()
   
   # import all rasters in this group
-  rast.list = lapply(species, function(x) terra::rast(paste0("~/McGill University/Laura's Lab_Group - range-coverage/upgraded_cells/",taxagroups[t],"/min_1obs/", x))$upgraded)
+  rast.list = lapply(species, function(x) terra::rast(paste0("~/McGill University/Laura's Lab_Group - range-coverage/",taxagroups[t],"/", x))$change)
   
   # reproject the base grid for resampling so they all match
   canada = terra::project(canada, rast.list[[1]])
   rast.resamp = lapply(rast.list, resample, canada, method = "sum")
+  for(i in 1:length(rast.resamp)){
+    rast.resamp[[i]][rast.resamp[[i]]>1] = 1
+  }
   # stack 'em
   rast.stack = terra::rast(rast.resamp)
   
@@ -57,6 +67,8 @@ for(t in 1:length(taxagroups)){
 # read them back in to make plots and a full summary stack
 all = lapply(taxagroups, function(x) terra::rast(paste0("outputs/range-coverage/summary-results/map_upgradedcells_sumspecies_",x,".tif")))
 names(all) = taxagroups
+all = lapply(all, project, "EPSG:3347")
+canada = project(canada, "EPSG:3347")
 all.resamp = lapply(all, resample, canada, method = "sum")
 # stack 'em
 all.stack = terra::rast(all.resamp)
@@ -87,7 +99,7 @@ pal = viridis::turbo(5)
 (m = mapview::mapview(all.sum.nozeros, 
         col.regions = pal,
         layer.name = "Species with new sightings", 
-        na.color = "transparent") )
+        na.color = "transparent", alpha.regions = .8) )
 htmlwidgets::saveWidget(m@map, 
                         file = "outputs/range-coverage/interactive/allgroups_newsightings.html",
                         selfcontained = TRUE)
@@ -95,33 +107,24 @@ htmlwidgets::saveWidget(m@map,
 # https://rpubs.com/blitzthegap/newsightings
 
 
-df = project(all.sum.nozeros, crs(canada))
+df = project(all.sum.nozeros, "EPSG:3347")
+canada_poly = project(canada_poly, "EPSG:3347")
+
+
+theme_set( hrbrthemes::theme_ipsum_rc(grid = FALSE, 
+                                      axis = FALSE, axis_text_size = 1,
+                                      ticks = FALSE,
+                                      base_size = 14) +
+             theme(legend.position = "top", legend.key.width = unit(2.5,"cm")))
 
 ggplot() +
   geom_sf(data = sf::st_as_sf(canada_poly), col = "grey90", fill = "grey90") +
-  stars::geom_stars(data = stars::st_as_stars(df)) +
-  scale_fill_viridis_c(option = "turbo", na.value = "transparent") +
-  labs(fill = "Newly sighted species") +
+  geom_spatraster(data = df, aes(fill = sum), interpolate = F) +
+  scale_fill_viridis_c(option = "turbo",
+                       name = "Species with\ncoverage gains",
+                       end = 1, begin = .1,
+                       na.value = "transparent")  +
   theme_void()
+ggsave("figures/gain_rangecoverage_alltaxa_map.png", width = 12.5, height = 7.9)
 
-# tiles = makeTiles(all.sum.nozeros, "outputs/range-coverage/summary-results/map_upgradedcells_sumspecies_all")
-# library(mapgl)
-# maplibre(
-#   #maptiler_style("satellite"),   # base map style
-#   center = c(-101, 62),     # center-ish of Canada
-#   zoom = 1.6) |>
-#   
-#   # set to globe for the sphere look
-#   set_projection("globe") |> 
-#   
-#   # Add the GBIF raster tile layer
-#   mapgl::add_image_source(
-#     id = "upgraded-doverage",
-#     data = all.sum.nozeros$sum
-#   ) |>
-#   # Add the raster layer to the map
-#   mapgl::add_raster_layer(
-#     id = "coverage-layer",
-#     source = "upgraded-doverage",
-#     raster_opacity = 1,
-#     raster_fade_duration = 0)
+
