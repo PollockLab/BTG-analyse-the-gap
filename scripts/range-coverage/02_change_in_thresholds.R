@@ -18,6 +18,9 @@ source("scripts/range-coverage/calc_range_coverage_change.R")
 # list of taxa groups
 taxagroups = list.files("~/McGill University/Laura's Lab_Group - IUCN Ranges/Unclipped/EASE2.0_12.5km/")
 inatgroups = c("Amphibia", "Aves", "Insecta", "Mammalia", "Plantae", "Reptilia")
+# let's not do birds:
+taxagroups = taxagroups[-2]
+inatgroups = inatgroups[-2]
 
 
 # function to calculate and map the change in cells that meet a threshold ======
@@ -56,7 +59,7 @@ df2$range_km = NA
 df2$n_cells = NA
 
 # Run change in range coverage for all species!
-for(t in c(1:6)){
+for(t in c(1:length(taxagroups))){
 
   # Load species names that have previously been included
   species = dplyr::filter(df2, Taxa == taxagroups[t]) |>
@@ -346,15 +349,14 @@ df3$after_perc |> hist()
 df3$cvg_category_before = NA
 df3$cvg_category_before[which(df3$before_perc <= 1)] <- "Very poor (<1%)"
 df3$cvg_category_before[which(df3$before_perc >1 &  df3$before_perc <= 10)] <- "Poor (1-10%)"
-df3$cvg_category_before[which(df3$before_perc >10 & df3$before_perc <= 25)] <- "Low (10-50%)"
+df3$cvg_category_before[which(df3$before_perc >10 & df3$before_perc <= 50)] <- "Low (10-50%)"
 df3$cvg_category_before[which(df3$before_perc >50 & df3$before_perc <= 75)] <- "High (50-75%)"
 df3$cvg_category_before[which(df3$before_perc >75 & df3$before_perc <= 100)] <- "Very high (75-100%)"
 
 df3$cvg_category_before = factor(df3$cvg_category_before,
                                  levels = c("Very poor (<1%)",
                                             "Poor (1-10%)",
-                                            "Low (10-25%)",
-                                            "Medium (25-50%)",
+                                            "Low (10-50%)",
                                             "High (50-75%)",
                                             "Very high (75-100%)"))
 
@@ -402,20 +404,19 @@ ggplot(data = df3_donut.b) +
   theme(strip.text = element_text(face = "bold", size = 16))
 ggsave("figures/range-coverage-donuts_beforeBTG.png", width = 10.6, height = 7.83)
 
+
 ## After -----------------------------------------------------------------------
 
 df3$cvg_category_after = NA
 df3$cvg_category_after[which(df3$after_perc <= 1)] <- "Very poor (<1%)"
 df3$cvg_category_after[which(df3$after_perc >1 & df3$after_perc <= 10)] <- "Poor (1-10%)"
-df3$cvg_category_after[which(df3$after_perc >10 & df3$after_perc <= 25)] <- "Low (10-25%)"
-df3$cvg_category_after[which(df3$after_perc >25 & df3$after_perc <= 50)] <- "Medium (25-50%)"
+df3$cvg_category_after[which(df3$after_perc >10 & df3$after_perc <= 50)] <- "Low (10-50%)"
 df3$cvg_category_after[which(df3$after_perc >50 & df3$after_perc <= 75)] <- "High (50-75%)"
 df3$cvg_category_after[which(df3$after_perc >75 & df3$after_perc <= 100)] <- "Very high (75-100%)"
 df3$cvg_category_after = factor(df3$cvg_category_after,
                                  levels = c("Very poor (<1%)",
                                             "Poor (1-10%)",
-                                            "Low (10-25%)",
-                                            "Medium (25-50%)",
+                                            "Low (10-50%)",
                                             "High (50-75%)",
                                             "Very high (75-100%)"))
 
@@ -532,7 +533,7 @@ df4_change_donut$label <- paste0(df4_change_donut$n)
     scale_fill_manual(values = c(rev(PNWColors::pnw_palette("Bay",8,type="continuous")[3:6]))) +
     coord_polar(theta = "y") +
     labs(fill = "Range coverage",
-         title = "Species with better range coverage",
+         title = "Species with improved range coverage",
          subtitle = "") +
     xlim(c(-2,2)) +
     theme_void(base_size = 14,
