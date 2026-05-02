@@ -73,9 +73,27 @@ all.resamp = lapply(all, resample, canada, method = "sum")
 # stack 'em
 all.stack = terra::rast(all.resamp)
 
+# map
+
+# ggplot() +
+#   #geom_spatraster(data = canada, fill = "grey90",) +
+#   geom_spatraster(data = all.stack) + 
+#   facet_wrap(~lyr) +
+#   colorspace::scale_fill_continuous_sequential("Batlow",
+#                                                name = "",
+#                                                #name = "Climate sampling balance",
+#                                                na.value = "transparent", rev = F) +
+#   hrbrthemes::theme_ipsum_rc(grid = FALSE, 
+#                              axis = FALSE, axis_text_size = 1,
+#                              ticks = FALSE,
+#                              base_size = 14) +
+#   theme(legend.position = "top", legend.key.width = unit(1.5,"cm"))
+
+
 # sum stacked rasters (giving: new cell coverage for X number of species)
 all.sum = sum(all.stack, na.rm = T)
 all.sum = round(all.sum)
+
 
 # plot to check it out
 plot(all.sum)
@@ -119,12 +137,8 @@ theme_set( hrbrthemes::theme_ipsum_rc(grid = FALSE,
 
 ggplot() +
   geom_sf(data = sf::st_as_sf(canada_poly), col = "grey90", fill = "grey90") +
-  geom_spatraster(data = df, aes(fill = sum), interpolate = F) +
-  scale_fill_viridis_c(option = "turbo",
-                       name = "Species with\ncoverage gains",
-                       end = 1, begin = .1,
-                       na.value = "transparent")  +
-  theme_void()
+  geom_spatraster(data = all.sum.nozeros, aes(fill = sum), interpolate = F) +
+    colorspace::scale_fill_continuous_sequential("Batlow",
+                                                 name = "Newly observed\nspecies per cell", trans = "sqrt",
+                                                 na.value = "transparent", rev = F) 
 ggsave("figures/gain_rangecoverage_alltaxa_map.png", width = 12.5, height = 7.9)
-
-

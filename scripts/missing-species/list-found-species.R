@@ -8,12 +8,6 @@ library(dbplyr, warn.conflicts = FALSE)
 library(duckdb)
 library(sf)
 
-# load manually downloaded project data
-# animals = read.csv("data/heavy/missing-species/missing-animals/observations-619233.csv")
-# insects = read.csv("data/heavy/missing-species/missing-insects.csv/observations-619217.csv")
-# plants = read.csv("data/heavy/missing-species/missing-plants/observations-619220.csv")
-# fungi = read.csv("data/heavy/missing-species/missing-fungi/observations-619222.csv")
-
 # load parquet file
 inat = arrow::open_dataset("data/heavy/BTG-data/inaturalist-canada-dec2025_smaller.parquet")
 
@@ -60,6 +54,7 @@ sp_2025 = sp_2025 |>
 # save the species list
 write.csv(sp_2025, "outputs/found_species_in_2025.csv", row.names = FALSE)
 
+
 # Plots and summaries ----------------------------------------------------------
   
 # how many missing species were found? (with corrected species list)
@@ -87,7 +82,7 @@ new.groups = filter(new.groups, iconic_taxon_name != "NA")
 new.groups$iconic_taxon_name = factor(new.groups$iconic_taxon_name,
                                       levels = new.groups$iconic_taxon_name[order(new.groups$n)])
 total.sp = sum(new.groups$n)
-ggplot(data = new.groups) +
+(A = ggplot(data = new.groups) +
   geom_bar(aes(
     y = iconic_taxon_name,
     x = n,
@@ -109,7 +104,7 @@ ggplot(data = new.groups) +
                              axis_title_face = "bold") +
   coord_cartesian(xlim = c(0, max(new.groups$n+12))) +
   theme(legend.position = "none",
-        panel.grid.major.y = element_blank()) 
+        panel.grid.major.y = element_blank()) )
 ggsave("figures/missing-species-pergroup_researchgrade.png", width = 7.61, height = 4.71)
 
 
@@ -144,7 +139,7 @@ canada = st_read("data/base-layers/canada-polygon/canada.outline.shp")
 canada = st_transform(canada, "EPSG:3347")
 
 # plot!
-ggplot() +
+(B = ggplot() +
   geom_sf(data = canada, col = "grey20", fill = "grey20") +
   geom_sf(data = newsp.pts,
           aes(col = iconic_taxon_name)) +
@@ -152,10 +147,50 @@ ggplot() +
   hrbrthemes::theme_ipsum_rc(grid = FALSE, 
                              axis = FALSE, axis_text_size = 1,
                              ticks = FALSE,
-                             base_size = 14) 
+                             base_size = 14)) 
 ggsave("figures/map_newspecies2025.png", width = 10, height = 8)
 
-mapview::mapview(newsp.pts, zcol = "iconic_taxon_name")
+# mapview::mapview(newsp.pts, zcol = "iconic_taxon_name")
+
+
+## Québec version ==============================================================
+
+# qc polygon
+qc = st_read("data/base-layers/prov_territo/prov_territo.shp") |>
+  filter(PROV_TERRI == "QC")
+qc = st_transform(qc, "EPSG:3347")
+
+# only keep points in Québec
+qc_pts = st_intersection(newsp.pts, qc)
+
+# plot!
+ggplot() +
+  geom_sf(data = qc, col = "grey20", fill = "grey20") +
+  geom_sf(data = qc_pts,
+          aes(col = iconic_taxon_name)) +
+  colorspace::scale_color_discrete_qualitative(name = "") +
+  hrbrthemes::theme_ipsum_rc(grid = FALSE, 
+                             axis = FALSE, axis_text_size = 1,
+                             ticks = FALSE,
+                             base_size = 14) 
+ggsave("figures/map_newspecies2025_qc.png", width = 8, height = 8)
+
+## filter to QCBS user logins --------------------------------------------------
+
+# plot!
+ggplot() +
+  geom_sf(data = qc, col = "grey20", fill = "grey20") +
+  geom_sf(data = qc_pts,
+          aes(col = iconic_taxon_name)) +
+  colorspace::scale_color_discrete_qualitative(name = "") +
+  hrbrthemes::theme_ipsum_rc(grid = FALSE, 
+                             axis = FALSE, axis_text_size = 1,
+                             ticks = FALSE,
+                             base_size = 14) 
+ggsave("figures/map_newspecies2025_qc.png", width = 8, height = 8)
+
+
+# mapview::mapview(qc_pts, zcol = "iconic_taxon_name", layer.name = "Groupe")
 
 
 
@@ -170,38 +205,75 @@ finders = newsp.pts |>
   distinct(scientific_name) |>
   summarise("n_sp" = n())
 
-finders$name = NA
-names.finders = list()
-for(n in 1:nrow(finders)){
-  names.finders[[n]] = rinat::get_inat_user_stats(uid = finders$user_login[n])
-}
-finders$name = names.finders
-
 # import qcbs logins
 qcbs <- readRDS("~/Documents/GitHub/storymap-qcbs/data/championteams_userlogins.rds")
+qcbs = c(qcbs, "katherinehebert") # i'm missing!
 qcbs.finders = finders$user_login[which(finders$user_login %in% qcbs)]
 
 qc = st_read("data/base-layers/prov_territo/prov_territo.shp") |>
   filter(PROV_TERRI == "QC")
 
 # plot!
+newsp.qcbs = filter(newsp.pts, user_login %in% qcbs.finders)
+newsp.qcbs$label = paste0(newsp.qcbs$scientific_name, " (@", newsp.qcbs$user_login, ")")
 ggplot() +
-  geom_sf(data = qc, col = "grey20", fill = "grey20") +
-  geom_sf(data = filter(newsp.pts, user_login %in% qcbs.finders),
-          aes(col = iconic_taxon_name)) +
-  colorspace::scale_color_discrete_qualitative(name = "") +
+  geom_sf(data = qc, 
+          col = "grey20", fill = "grey20") +
+    geom_sf(data = newsp.qcbs,
+          aes(col = label), size = 3) +
+  # geom_sf(data = newsp.qcbs,
+  #         aes(col = label), size = 3) +
+  colorspace::scale_color_discrete_qualitative(palette = "Dynamic", name = "") +
   hrbrthemes::theme_ipsum_rc(grid = FALSE, 
-                             axis = FALSE, axis_text_size = 1,
+                             axis = FALSE, 
+                             axis_text_size = 1,
                              ticks = FALSE,
-                             base_size = 14) +theme_bw()
+                             base_size = 16) +
+  theme(legend.position = "right", legend.text = element_text(face = "italic"))
+ggsave("figures/qc_map.png", width = 8, height = 5)
+ggsave("figures/qc_map_specieslabels.png", width = 8, height = 5)
 
-mapview::mapview(filter(newsp.pts, user_login %in% qcbs.finders), 
-                 zcol = "scientific_name", 
-                 layer = "Species", 
-                 cex = 10,
+# plot!
+inat.qcbs = filter(inat, user_login %in% qcbs, year == "2025") |> collect()
+inat.qcbs$year = as.numeric(inat.qcbs$year)
+inat.qcbs.2025 = inat.qcbs |> 
+  filter(year == 2025,
+         place_state_name == "Québec")
+inat.qcbs.2025 = inat.qcbs.2025 |> 
+  st_as_sf(coords = c("longitude", "latitude"))
+st_crs(inat.qcbs.2025) <- st_crs(qc)
+inat.qcbs.2025 <- st_transform(inat.qcbs.2025, st_crs(qc))
+inat.qcbs.2025 = inat.qcbs.2025[which(inat.qcbs.2025$iconic_taxon_name != "NA"),]
+st_write(inat.qcbs.2025, "outputs/qcbs/inat.qcbs.2025.shp")
+
+ggplot() +
+  geom_sf(data = qc, 
+          col = "grey20", fill = "grey20") +
+  geom_sf(data = inat.qcbs.2025,
+          aes(fill = iconic_taxon_name), size = 3, pch = 21, linewidth = .02) +
+  colorspace::scale_fill_discrete_qualitative(palette = "Dynamic", name = "") +
+  hrbrthemes::theme_ipsum_rc(grid = FALSE, 
+                             axis = FALSE, 
+                             axis_text_size = 1,
+                             ticks = FALSE,
+                             base_size = 16) +
+  theme(legend.position = "right", legend.text = element_text(face = "italic"))
+ggsave("figures/qc_map_2025obs_qcbs.png", width = 8, height = 5)
+
+inat.qcbs.2025 |>
+  select(c("user_login", "scientific_name", "common_name", "iconic_taxon_name", "observed_on_string")) |>
+  rename(c("IDiNaturalist" = "user_login", 
+           "Nom scientifique" = "scientific_name", 
+           "Nom commun" = "common_name", 
+           "Groupe" = "iconic_taxon_name", 
+           "Date" = "observed_on_string")) |>
+  mapview::mapview(zcol = "Groupe", 
+                   layer.name = "Groupe", 
+                 cex = 8,
                  map.types = "Esri.WorldImagery",
                  alpha.regions = 1,
-                 col.regions = PNWColors::pnw_palette("Bay", 10)[3:10])
+                 col.regions = colorspace::qualitative_hcl(palette = "Dark 2",n = 15)) 
+
 
 new.groups.qcbs = filter(newsp.pts, user_login %in% qcbs.finders) |>
   group_by(iconic_taxon_name, scientific_name) |>
@@ -252,6 +324,7 @@ g
 
 # Some species in these original projects do not belong (they had many observations)
 # before BTG... might have been included because of taxonomic glitches
+
 
 # Species to remove ------------------------------------------------------------
 

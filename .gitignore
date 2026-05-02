@@ -56,3 +56,5 @@ BTG-analyse-the-gap.Rproj
 /outputs/richnessmaps
 /outputs/densitymaps
 /outputs/comparison-maps
+data/user_information/bigteam_userlogins.csv
+/data

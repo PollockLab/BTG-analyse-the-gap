@@ -168,8 +168,11 @@ plotly::gg2list(p, tooltip = "species") |>
 # Plot range coverage gains by PROPORTION (area) ===============================
 
 df3 = df2 |> 
-  dplyr::filter(range_km > 0) |> # Delete rows with 0 range area
+  dplyr::filter(after_km > 0 & range_km > 0) |> # Delete rows with 0 range area
   select(c(Taxa, species, before_km:range_km)) 
+# remove Seligeria donniana
+df3 = filter(df3, species != "Seligeria donniana")
+df3 = filter(df3, species != "Corispermum hookeri")
 
 # calculate a percentage of range covered in km2
 df3$before_perc = 100*df3$before_km/df3$range_km
@@ -185,41 +188,86 @@ df3$species = gsub(".tif", "", df3$species)
 # reset theme for the plotly part
 theme_set(theme_classic())
 
+df3_summary = df3 |> 
+  group_by(Taxa) |>
+  summarise(
+    "mu" = mean((100*change_km/range_km), na.rm = T),
+    "sd" = sd((100*change_km/range_km), na.rm = T)
+  )
+
+df3$Taxa = factor(df3$Taxa, levels = df3_summary$Taxa[order(df3_summary$mu)])
 (p.perc = ggplot(data = df3) +
   geom_jitter(aes(x = 100*change_km/range_km,
                   y = Taxa,
                   group = species,
-                 col = Taxa),
-             size = 3, alpha = .7) +
-  scale_color_manual(values = pal) +
-  labs(x = "Gained range coverage (% of the total range)", 
-       y = "",
-       title = "Gains in range coverage") +
+                 col = 100*change_km/range_km),
+             size = 3, alpha = .7, height = .2) +
+  colorspace::scale_color_continuous_sequential("Batlow", 
+                                                rev = F, 
+                                                begin = .1, end = .9,
+                                                trans = "sqrt") +
+  labs(x = "Gained range coverage (%)", 
+       y = "") +
     hrbrthemes::theme_ipsum_rc(base_size = 14,
                                axis_title_size = 14) +
     theme(legend.position = "none",
           axis.title = element_text(size = 16)))
+ggsave("figures/gained_coverage_percentage.png", width = 6.19, height = 3.29)
 
 plotly::gg2list(p.perc, tooltip = "species") |> 
   plotly::as_widget() |>
   htmlwidgets::saveWidget(file = "figures/gained_coverage_percentage.html")
 
+
+(p.perc = ggplot(data = df3) +
+    geom_jitter(aes(x = 100*change_km/range_km,
+                     y = Taxa,
+                     fill = Taxa,
+                     col = Taxa),
+                size = .5,
+                 alpha = .1, height = .1) +
+    geom_boxplot(aes(x = 100*change_km/range_km,
+                    y = Taxa,
+                    fill = Taxa,
+                    col = Taxa
+                    ),
+                size = .3,
+                alpha = .3, width = .5, outliers = FALSE) +
+    scale_color_manual(values = pal) +
+    scale_fill_manual(values = pal) +
+    labs(x = "Gained range coverage (% of the total range)", 
+         y = "",
+         title = "Gains in range coverage") +
+    hrbrthemes::theme_ipsum_rc(base_size = 14,
+                               axis_title_size = 14) +
+    theme(legend.position = "none",
+          axis.title = element_text(size = 16)))
+
+
 # try relative change!
-df3$relative_change = 100*(df3$after_perc-df3$before_perc)/df3$before_perc
+df3$relative_change = 100*((df3$after_perc-df3$before_perc+1))/(df3$after_perc+1)
+df3$relative_change[which(df3$after_km == 0)] <- 0
+df3$change.perc = df3$after_perc-df3$before_perc
+df3 = filter(df3, species != "Seligeria donniana") # range must be off
+df3 = filter(df3, species != "Rosa glauca")
+df3 = filter(df3, species != "Corispermum hookeri")
 (p.rel = ggplot(data = df3) +
-  geom_jitter(aes(x = relative_change,
+  geom_jitter(aes(x = change.perc,
                   y = Taxa,
                   group = species,
                   col = Taxa),
               size = 3, alpha = .7) +
   scale_color_manual(values = pal) +
-  labs(x = "Relative gain in coverage (%)", 
+    scale_x_sqrt() +
+  labs(x = "Gain in coverage (%)", 
        y = "",
-       title = "Relative gains in range coverage") +
+       title = "Gains in range coverage") +
   hrbrthemes::theme_ipsum_rc(base_size = 14,
                              axis_title_size = 14) +
   theme(legend.position = "none",
         axis.title = element_text(size = 16)))
+ggsave("figures/gained_coverage_relativepercentage_corrected.png")
+
 plotly::gg2list(p.rel, tooltip = "species") |> 
   plotly::as_widget() |>
   htmlwidgets::saveWidget(file = "figures/gained_coverage_relativepercentage.html")
@@ -269,10 +317,10 @@ df3 |>
   group_by(Taxa) |>
   summarise("value" = max(100*change_km/range_km)) |>
   ggplot() +
-    geom_bar(aes(x = value,
+  geom_bar(aes(x = value,
                     y = Taxa,
                     fill = Taxa),
-                size = .5, alpha = .5, stat = "identity") +
+                size = .5, alpha = .3, stat = "identity") +
   geom_jitter(data = df3,
               aes(x = (100*change_km/range_km),
                   y = Taxa,
@@ -297,7 +345,7 @@ ggsave("figures/gained_coverage_relativepercentage.png", width = 6.07, height = 
 top10 = df3 |>
   group_by(Taxa) |>
   group_split(.keep = TRUE)
-indices = lapply(top10, function(x) order(x$change_km, decreasing = TRUE)[1:10])
+indices = lapply(top10, function(x) order(x$change_km, decreasing = TRUE)[1:5])
 for(i in 1:length(top10)){
   top10[[i]] = top10[[i]][indices[[i]],]
 }
@@ -326,8 +374,8 @@ scale_fill_manual(values = pal)  +
     scale_alpha_discrete(range = c(1, .7)) +
     labs(x = "Range coverage (%)", 
          y = "",
-         title = "Top 10: Gained range coverage",
-         subtitle = "Proportion of species' ranges covered by at least 1 observation per 10km cell before (pale) and after (dark) Blitz the Gap."
+         title = "Top 5: Gained range coverage",
+         subtitle = "Proportion of species' ranges covered by at least 1 observation per 10km cell before (pale) and after (dark) 2025."
     ) +
     hrbrthemes::theme_ipsum_es(base_size = 13,
                                axis_title_size = 16,
@@ -336,7 +384,7 @@ scale_fill_manual(values = pal)  +
     theme(legend.position = "none",
           axis.text.y = element_text(face = "italic"))) +
   facet_wrap(~Taxa, scales = "free_y", ncol = 3)
-ggsave("figures/gained_coverage_barplot.png", width = 14, height = 9)
+ggsave("figures/gained_coverage_barplot.png", width = 13, height = 6)
 
 
 ## proportion of species with <10%, 10-25, 25-50, 50-75, and 75-100% range coverage
@@ -391,9 +439,9 @@ ggplot(data = df3_donut.b) +
                 xmin = 0,
                 xmax = 2,
                 fill = cvg_category_before), alpha = 1) +
-  geom_text( x=3, 
-             aes(y = 100*labelPosition, 
-                 label = label), size= 4) + # x here controls label position (inner / outer)
+  # geom_text( x=3, 
+  #            aes(y = 100*labelPosition, 
+  #                label = label), size= 4) + # x here controls label position (inner / outer)
   scale_fill_manual(values = rev(PNWColors::pnw_palette("Bay",8,type="continuous")[1:7])) +
   coord_polar(theta = "y") +
   labs(fill = "Range coverage") +
@@ -448,9 +496,9 @@ ggplot(data = df3_donut) +
                 xmin = 0,
                 xmax = 2,
                 fill = cvg_category_after), alpha = 1) +
-  geom_text( x=3, 
-             aes(y = 100*labelPosition, 
-                 label = label), size= 4) + # x here controls label position (inner / outer)
+  # geom_text( x=3, 
+  #            aes(y = 100*labelPosition, 
+  #                label = label), size= 4) + # x here controls label position (inner / outer)
   scale_fill_manual(values = rev(PNWColors::pnw_palette("Bay",8,type="continuous")[1:7])) +
   coord_polar(theta = "y") +
   labs(fill = "Range coverage") +
@@ -485,7 +533,7 @@ df4_donut = df4 |>
                 xmin = 0,
                 xmax = 2,
                 fill = cat_change), alpha = 1) +
-  scale_fill_manual(values = c(rev(PNWColors::pnw_palette("Bay",6,type="continuous")))) +
+  scale_fill_manual(values = c(rev(PNWColors::pnw_palette("Bay",6,type="continuous"))[2:5], "grey")) +
   coord_polar(theta = "y") +
   labs(fill = "New range coverage") +
   xlim(c(-2,4)) +
@@ -493,7 +541,7 @@ df4_donut = df4 |>
              base_family = "EconSansCndReg") +
   facet_wrap(~Taxa) +
   theme(strip.text = element_text(face = "bold", size = 12)))
-ggsave("figures/range-coverage-donuts_changeincategory.png", width = 6.92, height = 5)
+ggsave("figures/range-coverage-donuts_changeincategory_each.png", width = 6.92, height = 5)
 
 
 # just plot species that did see changes
@@ -530,9 +578,9 @@ df4_change_donut$label <- paste0(df4_change_donut$n)
     geom_text( x= -2, 
                aes(y = 0, 
                    label = n_sp), size= 6) + # x here controls label position (inner / outer)
-    scale_fill_manual(values = c(rev(PNWColors::pnw_palette("Bay",8,type="continuous")[3:6]))) +
+    scale_fill_manual(values = c(rev(PNWColors::pnw_palette("Bay",8,type="continuous")[1:4]))) +
     coord_polar(theta = "y") +
-    labs(fill = "Range coverage",
+    labs(fill = "New range coverage",
          title = "Species with improved range coverage",
          subtitle = "") +
     xlim(c(-2,2)) +
@@ -542,3 +590,38 @@ df4_change_donut$label <- paste0(df4_change_donut$n)
     theme(strip.text = element_text(face = "bold", size = 12),
           legend.position = "bottom"))
 ggsave("figures/range-coverage-donuts_changeincategory.png", width = 6.92, height = 5)
+
+
+## map some examples -----------------------------------------------------------
+
+
+# Chelydra serpentina
+
+# Prepare to load range coverage results
+filepath = paste0("~/McGill University/Laura's Lab_Group - range-coverage/","AMPHIBIANS","/")
+
+# AMPHIBIANS
+maps = terra::rast(paste0(filepath, "Anaxyrus boreas.tif"))
+maps = terra::rast(paste0(filepath, "Lithobates pipiens.tif"))
+
+# # REPTILES
+# maps = terra::rast(paste0(filepath, "Chelydra serpentina.tif"))
+# maps = terra::rast(paste0(filepath, "Thamnophis radix.tif"))
+
+## BUTTERFLIES
+filepath = paste0("~/McGill University/Laura's Lab_Group - range-coverage/","BUTTERFLIES","/")
+maps = terra::rast(paste0(filepath, "Celastrina lucia.tif"))
+
+temp = coverage_threshold(maps$before,
+                          maps$after,
+                          threshold = 1) |> trim()
+plot(temp)
+ggplot() +
+  geom_spatraster(data = temp, 
+                  aes(fill = upgraded)) +
+  scale_fill_viridis_c(option = "plasma", 
+                       na.value = "transparent", 
+                       trans = "sqrt", values = c(0,1))
+mapview::mapview(temp$upgraded, 
+                 na.color = "transparent",
+                 legend = FALSE)

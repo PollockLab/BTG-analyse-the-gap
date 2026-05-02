@@ -67,28 +67,40 @@ richmap_stack = rast(list("sr.pre2025" = richmap.pre2025,
                           "sr.difference" = richmap.diff))
 plot(richmap_stack)
 writeRaster(richmap_stack, "outputs/comparison-maps/richness/srchange_alltaxa_2025_vs_20082024.tif", overwrite=TRUE)
+richmap_stack = terra::rast("outputs/comparison-maps/richness/srchange_alltaxa_2025_vs_20082024.tif")
+richmap.diff = richmap_stack$sr.difference
 
 # summarise the richness gains
 richvals = values(richmap_stack)
 richvals = richvals |> na.omit() |> data.frame()
 richvals$cellID = terra::cells(richmap.diff)
+richxy = terra::xyFromCell(object = richmap.diff, cell = richvals$cellID)
 richvals$x = richxy[,1]
 richvals$y = richxy[,2]
 
-richxy = terra::xyFromCell(object = richmap.diff, cell = richvals$cellID)
-
 # make point layer of cells where at least 50% of species were found in 2025
-richmap.biggains = richmap.diff/richmap.at2025
+richmap.biggains = richmap_stack$sr.difference/richmap_stack$sr.at2025
 richmap.onlygains = richmap.biggains
 richmap.onlygains[richmap.onlygains == 0] <- NA
 richmap.onlygains.pts = as.points(richmap.onlygains)
 
+
 # map the gains ----------------------------------------------------------------
+
+ggplot() +
+  tidyterra::geom_spatraster(
+    data = richmap_stack$sr.difference,
+    aes(fill = sr.difference)
+  ) +
+  colorspace::scale_fill_continuous_sequential("Batlow", 
+                                                rev = FALSE,
+                                                na.value = "transparent",
+                                                trans = "log10")
 
 ggplot() +
   tidyterra::geom_spatvector(data = canada, linewidth = 0) +
   geom_spatvector(data = richmap.onlygains.pts,
-                  aes(col = V1_length)) +
+                  aes(col = sr.difference )) +
   colorspace::scale_color_continuous_sequential("Batlow", rev = FALSE) +
   labs(col = "Relative\ngain (%)")
 ggsave("figures/gained_richness/map_relativegains_allgains.png", 
@@ -96,8 +108,8 @@ ggsave("figures/gained_richness/map_relativegains_allgains.png",
 
 ggplot() +
   tidyterra::geom_spatvector(data = canada, linewidth = 0) +
-  geom_spatvector(data = filter(richmap.onlygains.pts, V1_length >= 0.75),
-                  aes(col = V1_length)) +
+  geom_spatvector(data = filter(richmap.onlygains.pts, sr.difference >= 0.75),
+                  aes(col = sr.difference)) +
   colorspace::scale_color_continuous_sequential("Batlow", 
                                                 rev = FALSE, begin = 0.75) +
   labs(col = "Relative\ngain (%)")
@@ -106,8 +118,8 @@ ggsave("figures/gained_richness/map_relativegains_75pgains.png",
 
 ggplot() +
   tidyterra::geom_spatvector(data = canada, linewidth = 0) +
-  geom_spatvector(data = filter(richmap.onlygains.pts, V1_length > 0.9),
-                  aes(col = V1_length)) +
+  geom_spatvector(data = filter(richmap.onlygains.pts, sr.difference > 0.9),
+                  aes(col = sr.difference)) +
   colorspace::scale_color_continuous_sequential("Batlow", 
                                                 rev = FALSE, begin = 0.9) +
   labs(col = "Relative\ngain (%)") 
@@ -139,7 +151,34 @@ ggplot(data = richgains) +
 ggsave("figures/gained_richness/sr_diffVStotal_progressrainbow.png", 
        width = 6.3, height = 6.5)
 
+ggplot() +
+  geom_point(data = richgains,
+             aes(x = sr.difference, 
+                 y = y/10000), 
+             alpha = .7, size = .3, col = "grey80") +
+  geom_point(data = filter(richgains, sr.difference/sr.at2025>=.5),
+             aes(x = sr.difference, 
+                 col = sr.difference/sr.at2025,
+                 y = y/10000), 
+             alpha = .7, size = 2) +
+  colorspace::scale_color_continuous_sequential("Batlow", 
+                                                trans = "sqrt", rev = F) +
+  #scale_color_viridis_c(option = "turbo") +
+  labs(y = "Latitude", 
+       x = "Gain in observed richness",
+       col = "Relative\ngain (%)") +
+  theme(legend.position = "bottom")
+ggsave("figures/gained_richness/sr_diffVStotal_progressrainbow.png", 
+       width = 6.3, height = 6.5)
+
 ggplot(data = filter(richgains, sr.difference >=100)) +
   geom_histogram(aes(x = sr.difference), bins = 20) +
   labs(x = "Gained species richness", y = "Number of cells") +
   scale_y_sqrt()
+
+
+ggplot(data = richgains) +
+  geom_density2d_filled(aes(x = 100*sr.difference/sr.at2025, y = y), 
+                  alpha = .4, linewidth = .1) +
+  labs(x = "Proportion of total observed species that were found in 2025 (%)", 
+       y = "Density (sites)")

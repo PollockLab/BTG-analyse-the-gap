@@ -10,6 +10,13 @@ library(ggplot2)
 library(gbifdb)
 library(duckdb)
 
+# set common theme for all maps
+theme_set( hrbrthemes::theme_ipsum_rc(grid = FALSE, 
+                                       axis = FALSE, axis_text_size = 1,
+                                       ticks = FALSE,
+                                       base_size = 14) +
+              theme(legend.position = "top", legend.key.width = unit(2.5,"cm")))
+
 # Canada polygon
 canada <- st_read("data/base-layers/canada-polygon/canada.outline.shp")
 canada <- st_transform(canada, crs = "EPSG:3347")
@@ -18,24 +25,26 @@ canada <- st_transform(canada, crs = "EPSG:3347")
 base100k = rast("data/base-layers/canada-basegrids/canada.base.100k.tiff")
 base100k = project(base100k, crs(canada))
 
-# establish connection
-gbif <- gbif_remote()
+## GBIF - this takes a while but eventually works. Run once.
 
-# filter to canada
-gbifcan = gbif |>
-  filter(countrycode == "CA") |>
-  # keep only the useful columns for mapping
-  select(c(decimallatitude, decimallongitude, datasetkey, class)) |>
-  # round lat long to make some "cells"
-  mutate(latitude = round(decimallatitude,1),
-         longitude = round(decimallongitude,1)) |>
-  # count!
-  group_by(latitude, longitude, datasetkey, class) |>
-  summarise("n_obs" = n())
-  
-# collect it into R
-gbifcan = gbifcan |> collect()
-arrow::write_parquet(gbifcan, "data/heavy/BTG-data/gbif_all_latlong.parquet")
+# # establish connection
+# gbif <- gbif_remote()
+# 
+# # filter to canada
+# gbifcan = gbif |>
+#   filter(countrycode == "CA") |>
+#   # keep only the useful columns for mapping
+#   select(c(decimallatitude, decimallongitude, datasetkey, class)) |>
+#   # round lat long to make some "cells"
+#   mutate(latitude = round(decimallatitude,1),
+#          longitude = round(decimallongitude,1)) |>
+#   # count!
+#   group_by(latitude, longitude, datasetkey, class) |>
+#   summarise("n_obs" = n())
+#   
+# # collect it into R
+# gbifcan = gbifcan |> collect()
+# arrow::write_parquet(gbifcan, "data/heavy/BTG-data/gbif_all_latlong.parquet")
 
 # read parquet file
 gbifcan = arrow::open_dataset("data/heavy/BTG-data/gbif_all_latlong.parquet") |> 
@@ -63,6 +72,15 @@ r_gbif_nobirds.rast = crop(r_gbif_nobirds.rast, canada, mask = TRUE)
 
 
 ## gbif without birds and without inat
+
+n_inat = gbifcan |>
+  filter(class != "Aves") |>
+  filter(datasetkey != inatkey) |>
+  summarise("n" = n())
+n_gbif = gbifcan |>
+  filter(class != "Aves") |>
+  summarise("n" = n())
+
 
 r_gbif_nobirds_noinat.pts = gbifcan |>
   filter(class != "Aves") |>
@@ -103,7 +121,7 @@ r_gbif_nobirds_inat.rast = crop(r_gbif_nobirds_inat.rast, canada, mask = TRUE)
 
 # proportion of observations represented by inat
 diffmap = r_gbif_nobirds_inat.rast/r_gbif_nobirds.rast
-plot(diffmap)
+terra::writeRaster(diffmap, "outputs/summaries/map_gbif_inaturalistcontribution.tif")
 
 # aggregate a little bit to make it cleaner
 diffmap_lg = aggregate(diffmap, factor = 1, fun = "mean", na.rm = T)
@@ -138,12 +156,7 @@ ggplot() +
                        name = "iNaturalist\ncontribution (%)",
                        end = .8, begin = .2,
                        limits = c(0,100),
-                       na.value = "transparent") +
-  hrbrthemes::theme_ipsum_rc(grid = FALSE, 
-                             axis = FALSE, axis_text_size = 1,
-                             ticks = FALSE,
-                             base_size = 14) +
-  theme(legend.position = "top", legend.key.width = unit(2.5,"cm"))
+                       na.value = "transparent")
 ggsave("figures/map_gbif_inaturalistcontribution.png", width = 12.5, height = 7.9)
 
 ggplot() +
@@ -154,12 +167,7 @@ ggplot() +
                        name = "iNaturalist\ncontribution (%)",
                        end = .8, begin = .2,
                        limits = c(0,100),
-                       na.value = "transparent") +
-  hrbrthemes::theme_ipsum_rc(grid = FALSE, 
-                             axis = FALSE, axis_text_size = 1,
-                             ticks = FALSE,
-                             base_size = 14) +
-  theme(legend.position = "top", legend.key.width = unit(2.5,"cm"))
+                       na.value = "transparent")
 ggsave("figures/map_gbif_only100pinaturalist.png", width = 12.5, height = 7.9)
 
 
@@ -170,13 +178,7 @@ ggplot() +
   scale_fill_viridis_c(option = "turbo",
                        name = "iNaturalist\ncontribution (%)",
                        end = .8, begin = .2,
-                       limits = c(0,100),
-                       na.value = "transparent") +
-  hrbrthemes::theme_ipsum_rc(grid = FALSE, 
-                             axis = FALSE, axis_text_size = 1,
-                             ticks = FALSE,
-                             base_size = 14) +
-  theme(legend.position = "top", legend.key.width = unit(2.5,"cm"))
+                       na.value = "transparent")
 ggsave("figures/map_gbif_morethan90pinaturalist.png", width = 12.5, height = 7.9)
 
 ggplot() +
@@ -187,12 +189,7 @@ ggplot() +
                        name = "iNaturalist\ncontribution (%)",
                        end = .8, begin = .2,
                        limits = c(0,100),
-                       na.value = "transparent") +
-  hrbrthemes::theme_ipsum_rc(grid = FALSE, 
-                             axis = FALSE, axis_text_size = 1,
-                             ticks = FALSE,
-                             base_size = 14) +
-  theme(legend.position = "top", legend.key.width = unit(2.5,"cm"))
+                       na.value = "transparent")
 ggsave("figures/map_gbif_morethan75pinaturalist.png", width = 12.5, height = 7.9)
 
 
@@ -204,10 +201,58 @@ ggplot() +
                        name = "iNaturalist\ncontribution (%)",
                        end = .8, begin = .2,
                        limits = c(0,100),
-                       na.value = "transparent") +
-  hrbrthemes::theme_ipsum_rc(grid = FALSE, 
-                             axis = FALSE, axis_text_size = 1,
-                             ticks = FALSE,
-                             base_size = 14) +
-  theme(legend.position = "top", legend.key.width = unit(2.5,"cm"))
+                       na.value = "transparent")
 ggsave("figures/map_gbif_morethan50pinaturalist.png", width = 12.5, height = 7.9)
+
+
+## how much data are in those cells? -------------------------------------------
+
+temp = diffmap
+gbif = r_gbif_nobirds.rast
+nobs = gbif*temp
+nobs = aggregate(nobs, factor = 1, FUN = "sum", na.rm = T)
+
+# cut to just the cells that are 100% inat
+nobs_allinat = nobs
+nobs_allinat[diffmap_lg < 1] = NA
+plot(nobs_allinat)
+
+# plot
+ggplot() +
+  geom_sf(data = canada, fill = "grey10", color = "grey10") +
+  geom_spatraster(data = nobs_allinat,
+                  interpolate = FALSE) +
+  scale_fill_viridis_c(option = "turbo",
+                       name = "Observations",
+                       end = .8, begin = .2,
+                       trans = "sqrt",
+                       na.value = "transparent") 
+ggsave("figures/map_gbif_100pinaturalist_nobservations.png", width = 12.5, height = 7.9)
+
+# gbif map ---------------------------------------------------------------------
+
+# plot
+ggplot() +
+  geom_sf(data = canada, fill = "grey10", color = "grey10") +
+  geom_spatraster(data = nobs,
+                  interpolate = FALSE) +
+  scale_fill_viridis_c(option = "turbo",
+                       name = "Observations",
+                       end = .8, begin = .2,
+                       trans = "log10",
+                       na.value = "transparent") 
+ggsave("figures/map_gbif_nobirds_nobservations.png", width = 12.5, height = 7.9)
+
+
+# how many data points are from inat? ------------------------------------------
+
+gbif_nobirds = gbifcan |> filter(class != "Aves")
+inat_nobirds = gbifcan |> filter(class != "Aves",
+                                 datasetkey == inatkey)
+n_gbif = gbif_nobirds |> nrow()
+n_inat = inat_nobirds |> nrow()
+100*n_inat/n_gbif
+# 24.88
+
+
+df = read.table("outputs/map_gbif_inaturalistcontribution.csv")
