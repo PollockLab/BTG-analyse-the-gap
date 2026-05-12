@@ -54,6 +54,7 @@ sp_2025 = sp_2025 |>
 # save the species list
 write.csv(sp_2025, "outputs/found_species_in_2025.csv", row.names = FALSE)
 
+sp_2025 = read.csv("outputs/found_species_in_2025.csv")
 
 # Plots and summaries ----------------------------------------------------------
   
@@ -361,7 +362,7 @@ new.sp = df |>
   summarise("n" = n())
 
 # manually remove ones that had obs in inat (suspiciously high ones)
-df = df[-which(df$scientific_name== "Boechera polyantha"),]
+df = df[-which(df$scientific_name == "Boechera polyantha"),]
 
 
 
@@ -378,3 +379,51 @@ gbif_df = bind_rows(gbif, .id = "scientific_name")
 # first: these are ones that are not even in gbif
 not_in_gbif = lapply(gbif, length) |> unlist() 
 not_in_gbif = correct.sp$scientific_name[which(not_in_gbif == 0)]
+
+
+## which ones are new Globally?
+# According to the CWF's list here: https://www.inaturalist.ca/projects/1-global-observation-in-canada-1-observation-globale-au-canada
+obs.newsp = read.csv("outputs/missing-species/newsp_nobs_2025.csv")
+global = read.csv("data/heavy/missing-species/1 global observation in Canada | 1 observation globale au Canada/observations-733976.csv")
+global.2025 = global[grepl("2025", global$observed_on),]
+
+new.globally = obs.newsp |> filter(scientific_name %in% global.2025$scientific_name)
+new.globally = new.globally[order(new.globally$n, decreasing = FALSE),]
+write.csv(new.globally, "outputs/missing-species/newsp_globally_nobs_2025.csv")
+
+# summarise
+new.groups = inat |>
+  filter(scientific_name %in% new.globally$scientific_name) |>
+  group_by(iconic_taxon_name) |>
+  distinct(scientific_name) |>
+  summarise("n" = n()) |>
+  collect()
+new.groups = filter(new.groups, iconic_taxon_name != "NA")
+# reorder for plotting
+new.groups$iconic_taxon_name = factor(new.groups$iconic_taxon_name,
+                                      levels = new.groups$iconic_taxon_name[order(new.groups$n)])
+total.sp = sum(new.groups$n)
+(A = ggplot(data = new.groups) +
+    geom_bar(aes(
+      y = iconic_taxon_name,
+      x = n,
+      fill = iconic_taxon_name
+    ), stat = "identity", position = "dodge") +
+    geom_text(aes(
+      y = iconic_taxon_name,
+      label = n,
+      x = n,
+      col = iconic_taxon_name
+    ), size = 5,  hjust = -.2,fontface = "bold") +
+    colorspace::scale_fill_discrete_qualitative() +
+    colorspace::scale_color_discrete_qualitative() +
+    labs(y = "", 
+         x = "Species",
+         title = paste0(total.sp, " new species were recorded in 2025")) +
+    hrbrthemes::theme_ipsum_rc(base_size = 14,
+                               axis_title_size = 14,
+                               axis_title_face = "bold") +
+    coord_cartesian(xlim = c(0, max(new.groups$n+12))) +
+    theme(legend.position = "none",
+          panel.grid.major.y = element_blank()) )
+ggsave("figures/missing-species-pergroup_GLOBAL_researchgrade.png", width = 7.61, height = 4.71)
