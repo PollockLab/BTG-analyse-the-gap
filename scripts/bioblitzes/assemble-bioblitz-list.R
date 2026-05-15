@@ -111,7 +111,7 @@ proj2b = proj2b[-which(proj2b$id %in% proj3b$id),]
 ## add Limestone Barrens Bioblitz ----------------------------------------------
 
 proj4 = rinat::get_inat_obs_project(grpid = "limestone-barrens-of-newfoundland", type = "info")
-proj4b = info_wrap(proj4, multi = FALSE, "Other")
+proj4b = info_wrap(proj4, multi = FALSE, "Blitz the Gap")
 
 
 ## assemble into a table -------------------------------------------------------
@@ -169,20 +169,48 @@ for(i in 1:nrow(df_download)) {
 }
 obs.list = lapply(obs.list, function(x){
                   select(x, c("id", "uuid", 
-                         "observed_on", "user_login", "user.login",
+                         "observed_on", "user_login", 
                          "longitude", "latitude", 
                          "quality_grade", "captive",
                          "iconic_taxon_name", 
-                         "taxon.id", "taxon.name", "taxon.rank"))})
+                         "taxon.id", 
+                         "taxon.name", "taxon.rank"))})
 saveRDS(obs.list, "outputs/bioblitzes/master-bioblitz-obs-list.rds")
+
 
 # flag the ones stopped by the API (they tap out at 10000 obs)
 api_block = which(unlist(lapply(obs.list, nrow)) == 10000)
 # "expedition-fiord-arctic-bioblitz"
+# manually exported from iNaturalist:
+# "data/heavy/bioblitzes/expedition-fiord-2025.zip"
+
+# add these data to the list
+bb1 = read.csv("data/heavy/bioblitzes/expedition-fiord-2025/observations-735804.csv")
+colnames(bb1)
+
+bb1 = rename(bb1, c("captive" = "captive_cultivated",
+               "taxon.id" = "taxon_id",
+               "taxon.name" = "taxon_species_name"))
+bb1 = select(bb1, c("id", "uuid", 
+                         "observed_on", "user_login", 
+                         "longitude", "latitude", 
+                         "quality_grade", "captive",
+                         "iconic_taxon_name", 
+                         "taxon.id", 
+                         "taxon.name"))
+
+obs.list = obs.list |> lapply(select, -c("taxon.rank"))
+
+obs.list[[length(obs.list) + 1]] <- bb1
+names(obs.list)[length(obs.list)] <- "expedition-fiord-arctic-bioblitz"
+
+
+# Manually download specific dates for these ongoing projects ==================
+
 # "foray-nl-mushroom-lichen-diversity"       
 # "swan-lake-christmas-hill-nature-sanctuary"
 # "limestone-barrens-of-newfoundland"    
 
-# manually exported from iNaturalist:
+
 
 # "data/heavy/bioblitzes/limestone-barrens-2025-07-0714.zip"
