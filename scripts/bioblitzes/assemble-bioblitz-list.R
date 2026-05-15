@@ -182,35 +182,72 @@ saveRDS(obs.list, "outputs/bioblitzes/master-bioblitz-obs-list.rds")
 api_block = which(unlist(lapply(obs.list, nrow)) == 10000)
 # "expedition-fiord-arctic-bioblitz"
 # manually exported from iNaturalist:
-# "data/heavy/bioblitzes/expedition-fiord-2025.zip"
+# "data/heavy/bioblitzes/
 
-# add these data to the list
+# remove taxon rank bc it isn't available in manual downloads
+obs.list = obs.list |> lapply(select, -c("taxon.rank"))
+
+# load manually download
 bb1 = read.csv("data/heavy/bioblitzes/expedition-fiord-2025/observations-735804.csv")
-colnames(bb1)
+bb2 = read.csv("data/heavy/bioblitzes/limestone-barrens-2025-07-0714/observations-735401.csv")
+bb3 = read.csv("data/heavy/bioblitzes/foray-nl-mushroom-lichen-diversity/observations-735934.csv")
+bb4 = read.csv("data/heavy/bioblitzes/marais-de-la-riviere-aux-cerises/observations-735935.csv") 
+bb4$captive_cultivated = "false" # checked manually, there are no captive obs in the proj
+bb5 = read.csv("data/heavy/bioblitzes/swan-lake-christmas-hill-nature-sanctuary/observations-735938.csv")
+bbs = list(bb1, bb2, bb3, bb4, bb5)
+names(bbs) = c("expedition-fiord-arctic-bioblitz",
+               "limestone-barrens-of-newfoundland",
+               "foray-nl-mushroom-lichen-diversity",
+               "marais-de-la-riviere-aux-cerises",
+               "swan-lake-christmas-hill-nature-sanctuary")
 
-bb1 = rename(bb1, c("captive" = "captive_cultivated",
-               "taxon.id" = "taxon_id",
-               "taxon.name" = "taxon_species_name"))
-bb1 = select(bb1, c("id", "uuid", 
+## recode this as an lapply to avoid redoing it for each manual download ----
+bb.list = lapply(bbs, function(x) rename(x,
+  c("captive" = "captive_cultivated",
+    "taxon.id" = "taxon_id",
+    "taxon.name" = "taxon_species_name"))) |>
+  lapply(function(x) select(x, c("id", "uuid", 
                          "observed_on", "user_login", 
                          "longitude", "latitude", 
                          "quality_grade", "captive",
                          "iconic_taxon_name", 
                          "taxon.id", 
-                         "taxon.name"))
+                         "taxon.name")))
+names(bb.list) = names(bbs)
 
-obs.list = obs.list |> lapply(select, -c("taxon.rank"))
+# combine into one big list
+all_list = c(obs.list, bb.list)
 
-obs.list[[length(obs.list) + 1]] <- bb1
-names(obs.list)[length(obs.list)] <- "expedition-fiord-arctic-bioblitz"
+# match structure to previous list
+temp = lapply(all_list,
+                 function(x) {
+                   x$longitude <- as.numeric(x$longitude)
+                   x$latitude <- as.numeric(x$latitude)
+                   x$captive <- as.logical(x$captive)
+                   return(x)
+                   })
+# combine into one df
+all_df = temp |> 
+  bind_rows(.id = "slug") |>
+  filter(captive == FALSE) 
+all_df = distinct(all_df, uuid, .keep_all = TRUE) # remove duplicated observations
+all_df$observed_on = lubridate::as_date(all_df$observed_on)
+# write to file
+write.csv(all_df, "outputs/bioblitzes/master-bioblitz-obs.csv")
 
+## final reformatting for analyses ----------------------------------------------
 
-# Manually download specific dates for these ongoing projects ==================
+# get users in any bioblitz
+bioblitzers =  all_df |>
+  group_by(user_login, slug) |>
+  summarise("n_obs" = n(),
+            "n_days" = length(unique(observed_on)))
 
-# "foray-nl-mushroom-lichen-diversity"       
-# "swan-lake-christmas-hill-nature-sanctuary"
-# "limestone-barrens-of-newfoundland"    
+# join the bioblitz category to this
+bioblitzers = left_join(bioblitzers, select(df, c(category, slug, id)))
+write.csv(bioblitzers, "outputs/bioblitzes/bioblitzers-obscounts.csv")
 
+# get observations uuids from the bioblitzes
+obs_uuids = all_df$uuid |> unique()
+saveRDS(obs_uuids, "outputs/bioblitzes/bioblitzers-obsuuids.csv")
 
-
-# "data/heavy/bioblitzes/limestone-barrens-2025-07-0714.zip"
