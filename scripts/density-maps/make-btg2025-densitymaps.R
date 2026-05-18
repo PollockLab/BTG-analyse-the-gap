@@ -10,7 +10,13 @@ library(ggplot2)
 library(arrow)
 
 # set theme for all plots
-theme_set(hrbrthemes::theme_ipsum_rc())
+# set ggplot theme
+theme_set( hrbrthemes::theme_ipsum_rc(grid = FALSE, 
+                                      axis = FALSE, 
+                                      axis_text_size = 1,
+                                      ticks = FALSE,
+                                      base_size = 14) +
+             theme(legend.position = "top", legend.key.width = unit(2.5,"cm")))
 
 # Input data -------------------------------------------------------------------
 
@@ -133,40 +139,49 @@ densmap.new = densmap.btg
 densmap.new[is.na(sampled.new)] <- NA
 
 # project canada polygon
-canada_poly = project(canada_poly, crs(densmap.new))
-
+canada_poly = project(canada_poly, "EPSG:3347")
+# make points layer
 obsdens.pts = as.points(densmap.new)
+obsdens.pts = project(obsdens.pts, "EPSG:3347")
+# project densmap
+densmap.new = project(densmap.new, "EPSG:3347")
 
-# set ggplot theme
-theme_set( hrbrthemes::theme_ipsum_rc(grid = FALSE, 
-                                      axis = FALSE, 
-                                      axis_text_size = 1,
-                                      ticks = FALSE,
-                                      base_size = 14) +
-             theme(legend.position = "top", legend.key.width = unit(2.5,"cm")))
+# map the new cells with number of observations --------------------------------
+
+# trickery to make the palette prettier
+
+# first, make a layer of everything < 100 obs
+densmap.under100 = filter(densmap.new, V1_length < 100)
+densmap.under100[densmap.under100<100] <- 100
 
 ggplot() +
   geom_sf(data = sf::st_as_sf(canada_poly), col = "grey90", fill = "grey90") +
-  geom_spatraster(data = filter(densmap.new, V1_length < 100),
+  geom_spatraster(data = densmap.new, 
                   aes(fill = V1_length),
                   interpolate = F) +
-  geom_sf(data = filter(obsdens.pts, V1_length >=50), 
+  geom_sf(data = filter(obsdens.pts, V1_length >= 99), 
           aes(fill = V1_length, size = V1_length), 
-          pch = 21, alpha = .8, linewidth = .1) +
+          pch = 21, alpha = .65, linewidth = .05) +
   colorspace::scale_fill_continuous_sequential("Batlow",
                                                name = "Observations", 
-                                               trans = "log10",
-                                               na.value = "transparent", rev = F) +
+                                               trans = "sqrt",
+                                               na.value = "transparent", 
+                                               rev = F, 
+                                               breaks = c(100, 500, 1000, 1500)) +
   scale_size_area(name = "", 
                   max_size = 11, 
-                  breaks = c(100, 250, 500, 750, 1000),
-                  guide = guide_legend(reverse = TRUE)) +
-  theme(legend.box = "horizontal",
-        legend.position = "right",
-        legend.key.width = unit(0.5, 'cm'),
-        legend.key.height = unit(1.25, 'cm'),
-        legend.spacing.x = unit(0.2, 'cm'))
-ggsave("figures/gain_cells_obsdens_alltaxa_map.png", width = 7.57, height = 6.35)
+                  breaks = c(100, 500, 1000),
+                  guide = guide_legend(reverse = FALSE, order = 2)) +
+  theme_void() +
+  theme(text = element_text(family = "Roboto Condensed", size = 14),
+    legend.box = "horizontal",
+        legend.position = "top",
+        legend.key.width = unit(1.3, 'cm')) +
+  guides(
+    fill = guide_colorbar(order = 1),
+    area = guide_legend(order = 2)
+  )
+ggsave("figures/gain_cells_obsdens_alltaxa_map_JUN1OCT1gains.png", width = 7.45, height = 6.85)
 
 
 
