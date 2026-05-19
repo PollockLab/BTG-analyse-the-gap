@@ -133,6 +133,19 @@ obs.newsp = btg.pq |>
   collect()
 write.csv(obs.newsp, "outputs/missing-species/newsp_nobs_btg_APR1OCT1.csv")
 
+# average obs per species
+mean(obs.newsp$n)
+sd(obs.newsp$n)
+
+# this accounts for how much of the BTG data?
+obs.newsp.sum = sum(obs.newsp$n)
+totalobs = btg.pq |>
+  filter(iconic_taxon_name != "NA") |>
+  group_by(iconic_taxon_name, scientific_name) |>
+  summarise("n" = n()) |>
+  summarise("nn" = sum(n)) |>
+  collect()
+obs.newsp.sum/sum(totalobs$nn)
 
 # map the new observations -----------------------------------------------------
 
