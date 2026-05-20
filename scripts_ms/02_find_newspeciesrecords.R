@@ -183,11 +183,13 @@ ggsave("figures/map_newspeciesAPR1OCT12025.png", width = 10, height = 8)
 finders.spnames = newsp.pts |>
   group_by(user_login, scientific_name) |>
   summarise("n" = n())
+saveRDS(finders.spnames, "outputs/missing-species/newsp_finders_sf.rds")
 
 finders = newsp.pts |>
   group_by(user_login) |>
   distinct(scientific_name) |>
   summarise("n_sp" = n())
+write.csv(finders, "outputs/missing-species/newsp_finders_nsp.csv")
 
 ## which ones are new Globally? ------------------------------------------------
 # According to the CWF's list here: https://www.inaturalist.ca/projects/1-global-observation-in-canada-1-observation-globale-au-canada

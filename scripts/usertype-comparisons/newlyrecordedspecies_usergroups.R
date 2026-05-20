@@ -7,6 +7,7 @@ library(arrow)
 library(dbplyr, warn.conflicts = FALSE)
 library(duckdb)
 library(sf)
+library(patchwork)
 
 # load parquet file
 inat = arrow::open_dataset("data/heavy/BTG-data/inaturalist-canada-dec2025_smaller.parquet")
@@ -70,50 +71,64 @@ bc = bc$user_login
 qcbs <- readRDS("~/Documents/GitHub/storymap-qcbs/data/championteams_userlogins.rds")
 qcbs = c(qcbs, "katherinehebert") # i'm missing!
 qcbs = gsub("and abrunet27", "abrunet27", qcbs)
+write.csv(qcbs, "data/user_information/championteams_userlogins.csv")
 
 # assign categories
-users.df$category = "Other users"
+users.df$category = "Other observers"
 users.df$category[which(users.df$obs_total >= 1000)] <- "Enthusiast"
 users.df$category[which(users.df$obs_total >= 5000)] <- "Superuser"
 users.df$category[which(users.df$user_login %in% qcbs)] <- "QCBS"
 users.df$category[which(users.df$user_login %in% bc)] <- "BC Biodiversity"
 users.df$category = factor(users.df$category,
-                           levels = rev(c("Other users", "Enthusiast", "Superuser", "QCBS", "BC Biodiversity")))
+                           levels = (c("Other observers", "Enthusiast", 
+                                       "Superuser", "QCBS", "BC Biodiversity")))
 write.csv(users.df, "outputs/users/btg_users_newspecies.csv")
 
+
+
 A = ggplot(data = users.df) +
-  geom_point(aes(x = obs_total, y = new.sp, fill = category),
-             size = 3, pch = 21, alpha = .8) +
-  colorspace::scale_fill_discrete_divergingx("Zissou 1", rev = T) + 
-  hrbrthemes::theme_ipsum_rc() +
-  scale_x_sqrt() +
-  scale_y_sqrt() +
-  labs(y = "Newly-recorded species", 
-       x = "Total observations",
-       fill = "User group") +
-  theme(legend.position = "top") 
+  geom_jitter(aes(y = category, 
+                  x = sp_total, 
+                  colour = category),
+              size = 3, alpha = .6, height = .1) +
+  geom_boxplot(aes(x = sp_total, 
+                   y = category,
+                   fill = category), alpha = .6, 
+               outliers = FALSE, width = .5) +
+  colorspace::scale_fill_discrete_qualitative() + 
+  colorspace::scale_color_discrete_qualitative() + 
+  labs(x = "Total species observed (all-time) in iNaturalist Canada", 
+      y = "",
+       fill = "") + 
+  hrbrthemes::theme_ipsum_rc(axis_text_size = 18,
+                             axis_title_size = 20,
+                             axis = F, 
+                             base_size = 18) +
+  theme(legend.position = "none") 
+
 
 B = ggplot(data = users.df) +
-  geom_boxplot(aes(y = new.sp, 
-                   x = category,
-                   fill = category, col = category), alpha = .6, 
-               outlier.size = 3) +
-  # ggridges::geom_density_ridges(aes(x = new.sp, 
-  #                                   y = category, 
-  #                                   fill = category),
-  #           alpha = .9, linewidth = .1, scale = 1.5,
-  #           quantile_lines = TRUE,
-  #           quantile_fun = mean) +
-  colorspace::scale_fill_discrete_divergingx("Zissou 1", rev = T) + 
-  colorspace::scale_color_discrete_divergingx("Zissou 1", rev = T) + 
-  hrbrthemes::theme_ipsum_rc() +
-  #scale_x_sqrt() +
-  labs(y = "Newly-recorded species", 
-       x = "",
-       fill = "") + theme(legend.position = "none")
+  geom_jitter(aes(y = category, 
+                  x = new.sp, 
+                  colour = category),
+              size = 3, alpha = .6, height = .1) +
+  geom_boxplot(aes(x = new.sp, 
+                   y = category,
+                   fill = category), alpha = .6, 
+               outliers = FALSE, width = .5) +
+  colorspace::scale_fill_discrete_qualitative() + 
+  colorspace::scale_color_discrete_qualitative() + 
+  labs(x = "Newly-recorded species", 
+       y = "",
+       fill = "") +
+  hrbrthemes::theme_ipsum_rc(axis_text_size = 18,
+                             axis_title_size = 20,
+                             axis = T, 
+                             base_size = 12) +
+  theme(legend.position = "none",
+        axis.text.y = element_blank()) 
 
-library(patchwork)
-A / B + plot_annotation(tag_levels = "a") 
+A + B + plot_annotation(tag_levels = "a") 
 ggsave("figures/usertype_comparisons/newlyrecordedspecies_usergroups.png", width = 6.92, height = 7.42)
 
 
