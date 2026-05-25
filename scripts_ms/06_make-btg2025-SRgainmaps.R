@@ -66,21 +66,26 @@ index2 = paste(temp.thin$scientific_name, temp.thin$cell)
 index = which(index1 %in% index2)
 new.thin <- temp2.thin[-index]
 richmap.new <- rasterize(new.thin, base1k, fun="length")
-terra::writeRaster(richmap.new, "outputs/richnessmaps/richnessmap_JUN1OCT12025_allNEWtaxa.tif")
 
-# summarise the richness gains
-richvals = values(richmap_stack)
-richvals = richvals |> na.omit() |> data.frame()
-richvals$cellID = terra::cells(richmap.diff)
-richxy = terra::xyFromCell(object = richmap.diff, cell = richvals$cellID)
-richvals$x = richxy[,1]
-richvals$y = richxy[,2]
+# filter to species names (genus + species)
+temp.sp = stringr::str_count(new.thin$scientific_name, "\\w+")
+new.thin.sp = new.thin[which(temp.sp == 2),]
+richmap.newsp <- rasterize(new.thin.sp, base1k, fun="length")
+terra::writeRaster(richmap.newsp, "outputs/richnessmaps/richnessmap_JUN1OCT12025_allNEWtaxa.tif", overwrite = T)
 
-# make point layer of cells where at least 50% of species were found in 2025
-richmap.biggains = richmap_stack$sr.difference/richmap_stack$sr.at2025
-richmap.onlygains = richmap.biggains
-richmap.onlygains[richmap.onlygains == 0] <- NA
-richmap.onlygains.pts = as.points(richmap.onlygains)
+# # summarise the richness gains
+# richvals = values(richmap_stack)
+# richvals = richvals |> na.omit() |> data.frame()
+# richvals$cellID = terra::cells(richmap.diff)
+# richxy = terra::xyFromCell(object = richmap.diff, cell = richvals$cellID)
+# richvals$x = richxy[,1]
+# richvals$y = richxy[,2]
+# 
+# # make point layer of cells where at least 50% of species were found in 2025
+# richmap.biggains = richmap_stack$sr.difference/richmap_stack$sr.at2025
+# richmap.onlygains = richmap.biggains
+# richmap.onlygains[richmap.onlygains == 0] <- NA
+# richmap.onlygains.pts = as.points(richmap.onlygains)
 
 
 # map the gains ----------------------------------------------------------------

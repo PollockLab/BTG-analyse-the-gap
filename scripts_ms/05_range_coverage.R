@@ -165,5 +165,22 @@ ggsave("figures/gained_coverage_percentage_JUN1OCT1.png", width = 6.19, height =
 # Map --------------------------------------------------------------------------
 
 # map the gains in species richness per cell (i.e., new species-level range coverage)
-
 sr = terra::rast("outputs/richnessmaps/richnessmap_JUN1OCT12025_alltaxa.tif")
+sr = terra::project(sr, "EPSG:3347")
+# aggregate to be easier to visualize
+sr_agg = terra::aggregate(sr, factor = 10, fun = "max", na.rm = T)
+canada_poly = sf::st_read("data/base-layers/canada-polygon/canada.outline.shp")
+canada_poly = sf::st_transform(canada_poly, crs = "EPSG:3347")
+
+ggplot() +
+  geom_sf(data = canada_poly, col = "grey90", fill = "grey90") +
+  tidyterra::geom_spatraster(data = sr_agg, aes(fill = V1_length)) +
+  colorspace::scale_fill_continuous_sequential("Batlow", 
+                                               trans = "log10", 
+                                               na.value = "transparent", 
+                                               rev = F) +
+  theme_void() +
+  theme(legend.position = "top", 
+        legend.key.width = unit(2, "cm"),
+        text = element_text(family = "Roboto Condensed"))
+ggsave("figures/richness_map_JUN1OCT12025_DEC1DATA.png", width = 6.41, height = 5.77)
