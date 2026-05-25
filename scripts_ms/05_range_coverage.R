@@ -136,7 +136,8 @@ res_summary = res_df |>
   filter(prop_range_can>0) |>
   group_by(taxa) |>
   summarise(
-    "mu" = mean(prop_range_can),
+    "mu" = 100*mean(prop_range_can),
+    "sd" = 100*sd(prop_range_can),
     "max_sp" = sp[which.max(prop_range_can)]
   )
 res_df$Taxa = factor(res_df$taxa, 
