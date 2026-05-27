@@ -122,6 +122,7 @@ group_obs_l$primary_group = factor(group_obs_l$primary_group,
     coord_cartesian(ylim = c(0,2e5)) +
     # wrap long text in the x axis
     scale_x_discrete(labels = function(x) str_wrap(x, width = 10)) +
+    scale_y_continuous(labels = scales::label_number(scale = 0.001, suffix = "k")) +
     labs(y = "Observations", 
          x = "Funding") +
     hrbrthemes::theme_ipsum_rc(base_size = 14,

@@ -134,6 +134,7 @@ group_obs_l$groups = factor(group_obs_l$groups,
                x = "All", 
                size = 5,  vjust = -1, fontface = "bold") +
     scale_fill_manual(values = c("#8FBCBB", "grey10"), name = "") +
+    scale_y_continuous(labels = scales::label_number(scale = 0.001, suffix = "k")) +
     coord_cartesian(ylim = c(0,7e4)) +
     labs(y = "Observations", 
          x = "Bioblitz members") +

@@ -127,7 +127,7 @@ group_obs_l$groups = factor(group_obs_l$groups,
                x = "All", 
                size = 5,  vjust = -1, fontface = "bold") +
     scale_fill_manual(values = c("#A3BE8C", "grey10"), name = "") +
-    scale_y_continuous(labels = scales::label_number()) +
+    scale_y_continuous(labels = scales::label_number(scale = 0.001, suffix = "k")) +
     coord_cartesian(ylim = c(0,6e5)) +
     labs(y = "Observations", 
          x = "BTG members") +
