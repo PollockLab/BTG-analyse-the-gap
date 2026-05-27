@@ -13,10 +13,9 @@ user.obs = inat |>
 
 # categorize
 user.obs$user_category = NA
-user.obs$user_category[which(user.obs$n_obs < 10)] = "casual"
-user.obs$user_category[which(user.obs$n_obs >= 10)] = "dabblers"
-user.obs$user_category[which(user.obs$n_obs >= 1000)] = "enthusiast"
-user.obs$user_category[which(user.obs$n_obs >= 5000)] = "superusers"
+user.obs$user_category[which(user.obs$n_obs < 100)] = "casual"
+user.obs$user_category[which(user.obs$n_obs >= 100)] = "enthusiast"
+user.obs$user_category[which(user.obs$n_obs >= 5000)] = "superuser"
 # check
 table(user.obs$user_category)
 
