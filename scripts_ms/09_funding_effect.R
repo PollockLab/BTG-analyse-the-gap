@@ -1,25 +1,25 @@
-# Script to plot the effect of Blitz the Gap on observation rates
+# Script to plot the effect of grants on observation rates
 
 library(tidyverse)
 library(arrow)
-
-# load BTG member list (any user in any BTG related project) from btg-user-contributions.R
-btg = read.csv("outputs/users/btg_users_groups.csv", row.names = 1)
-length(unique(btg$user_login)) # 1123 people
 
 # load parquet file 
 inat = arrow::open_dataset("data/heavy/BTG-data/inaturalist-canada-dec2025_smaller.parquet") |>
   filter(year %in% c("2024", "2025"), month %in% c("06", "07", "08", "09"))
 
-# load observer categories
-user_categories = readRDS("outputs/users/observer_categories.rds")
-user_new = read.csv("outputs/users/btg_users_newin2025.csv")
+# load bioblitz data
+funded = read.csv("outputs/users/btg_users_participants.csv", row.names = 1) |>
+  filter(primary_group %in% c("QCBS Grantees", "BC Biodiversity 2025 Team", "GCB Grantees")) |>
+  select(-group)
+
+# unique users
+fundees = unique(funded$user_login) # 131
 
 ## Observation rate during BTG =================================================
 
 # filter to users that participated in btg
 inat.btg = inat |> 
-  filter(user_login %in% unique(btg$user_login))
+  filter(user_login %in% fundees)
 
 # get days active per user per year 
 days.active = inat.btg |>  
@@ -43,10 +43,14 @@ obs.daily = inat.btg |>
     "n_sp" = n()
   ) |>
   left_join(days.active) |>
-  collect()
+  collect() |>
+  distinct()
 
 # calculate daily rate
 obs.daily$rate = obs.daily$n_obs/obs.daily$days_active
+
+# attach funding categories 
+obs.daily = left_join(obs.daily, funded, multiple = "any")
 
 # calculate baseline expectation of number of observations per person during BTG
 # based on days active in 2025 x their average rate in 2024
@@ -54,24 +58,18 @@ obs.daily$rate = obs.daily$n_obs/obs.daily$days_active
 # get average rate in 2024
 rate.baseline = obs.daily |> 
   filter(year == "2024") |>
-  select(c(user_login, rate, year)) |>
+  select(c(user_login, rate, year, primary_group)) |>
   rename("rate_2024" = "rate")
 
 # multiply by active days in 2025
 obs.compare = obs.daily |>
   filter(year == "2025") |>
   select(-c(year)) |>
-  left_join(rate.baseline, by = "user_login") |>
+  left_join(rate.baseline, by = c("user_login", "primary_group")) |>
   select(-c(year)) |>
   mutate("n_obs_expected" = rate_2024*days_active)
-
-# add user classifications from 00_categorise_observers.R
-obs.compare = obs.compare |> 
-  left_join(select(user_categories, - c(n_obs)), by = "user_login")
-
-# categorise new users
-obs.compare$groups = obs.compare$user_category
-obs.compare$groups[which(obs.compare$user_login %in% user_new$user_login)] = "new"
+obs.compare$rate_2024[which(is.na(obs.compare$rate_2024))] <- 0
+obs.compare$n_obs_expected[which(is.na(obs.compare$rate_2024))] <- 0
 
 # TOTAL: summary
 btg_total = sum(obs.compare$n_obs, na.rm = T)
@@ -80,69 +78,54 @@ boost_total = btg_total-exp_total
 
 # PER GROUP: summary
 group_obs = obs.compare |>
-  group_by(groups) |>
+  group_by(primary_group) |>
   summarise(
-    "BTG" = sum(n_obs, na.rm = T),
+    "Bioblitz" = sum(n_obs, na.rm = T),
     "Baseline" = sum(n_obs_expected, na.rm = T)
   ) |>
-  mutate("BTG Effect" = BTG-Baseline,
-         "ratio" = (BTG/Baseline))
-group_obs$ratio[which(group_obs$groups == "new")] <- NA
+  mutate("Bioblitz Effect" = Bioblitz-Baseline,
+         "ratio" = (Bioblitz/Baseline))
 
 # long version for plotting
 group_obs_l = group_obs |>
-  select(-c(BTG, ratio)) |>
-  pivot_longer(cols = c(`BTG Effect`, Baseline),
-              names_to = "period",
-              values_to = "n_obs")
+  select(-c(Bioblitz, ratio)) |>
+  pivot_longer(cols = c(`Bioblitz Effect`, Baseline),
+               names_to = "period",
+               values_to = "n_obs")
 # add row for the totals
 total_tobind = data.frame(
-  "groups" = c("all", "all"),
-  "period" = c("BTG Effect", "Baseline"),
+  "primary_group" = c("all", "all"),
+  "period" = c("Bioblitz Effect", "Baseline"),
   "n_obs" = c(boost_total, exp_total)
 )
 group_obs_l = rbind(group_obs_l, total_tobind)
-group_obs_l$period = factor(group_obs_l$period, levels = c("BTG Effect", "Baseline"))
-group_obs_l$groups = factor(group_obs_l$groups, levels = c("new", "casual", "dabbler", 
-                                                       "enthusiast", "superuser", "all"))
+group_obs_l$period = factor(group_obs_l$period, levels = c("Bioblitz Effect", "Baseline"))
+group_obs_l$primary_group = factor(group_obs_l$primary_group, 
+                                   levels = c("QCBS Grantees", "GCB Grantees", "BC Biodiversity 2025 Team", "all"))
 (A = ggplot(data = group_obs_l) +
     geom_bar(aes(
-      x = groups,
+      x = primary_group,
       y = n_obs,
       fill = period
     ), stat = "identity", position = "stack") +
-    geom_text(data = filter(group_obs, groups != "new"),
+    geom_text(data = group_obs,
               aes(
-                y = BTG,
+                y = Bioblitz,
                 label = paste0(signif(ratio, 2),"x"),
-                x = groups), 
+                x = primary_group), 
               size = 5,  vjust = -1, fontface = "bold") +
     geom_text( y = btg_total,
                label = paste0(signif((btg_total/exp_total), digits = 2),"x"),
                x = "all", 
                size = 5,  vjust = -1, fontface = "bold") +
     scale_fill_manual(values = c("goldenrod1", "grey10"), name = "") +
-    coord_cartesian(ylim = c(0,6e5)) +
+    coord_cartesian(ylim = c(0,2e5)) +
     labs(y = "Observations", 
-         x = "BTG members") +
+         x = "Funding") +
     hrbrthemes::theme_ipsum_rc(base_size = 14,
                                axis_title_size = 14,
                                axis_title_face = "bold") +
     theme(legend.position = "top",
           panel.grid.major.y = element_blank()) ) 
-ggsave("figures/btg-effect/barplot-btgeffect.png", width = 6.6, height = 6.03)
+ggsave("figures/btg-effect/barplot-fundingeffect.png", width = 6.6, height = 6.03)
 
-
-
-
-
-## NOTES =======================================================================
-# baseline: expected number of observations given average efficiency
-# baseline = rate * active_days
-
-# boost: difference from baseline
-# boost = btg - baseline
-
-# totaled across everyone!
-
-## BTG members: compare users to BTG 2025 and same window but 2024
