@@ -4,10 +4,10 @@ library(tidyverse)
 library(arrow)
 
 # load parquet file 
-inat = arrow::open_dataset("data/heavy/BTG-data/inaturalist-canada-dec2025_smaller.parquet") |>
+inat = arrow::open_dataset("data/heavy/BTG-data/inaturalist-canada-dec2025_smAller.parquet") |>
   filter(year %in% c("2024", "2025"), month %in% c("06", "07", "08", "09"))
 
-# load bioblitz data
+# load funded observers
 funded = read.csv("outputs/users/btg_users_participants.csv", row.names = 1) |>
   filter(primary_group %in% c("QCBS Grantees", "BC Biodiversity 2025 Team", "GCB Grantees")) |>
   select(-group)
@@ -83,25 +83,25 @@ group_obs = obs.compare |>
     "Bioblitz" = sum(n_obs, na.rm = T),
     "Baseline" = sum(n_obs_expected, na.rm = T)
   ) |>
-  mutate("Bioblitz Effect" = Bioblitz-Baseline,
+  mutate("Funding Effect" = Bioblitz-Baseline,
          "ratio" = (Bioblitz/Baseline))
 
 # long version for plotting
 group_obs_l = group_obs |>
   select(-c(Bioblitz, ratio)) |>
-  pivot_longer(cols = c(`Bioblitz Effect`, Baseline),
+  pivot_longer(cols = c(`Funding Effect`, Baseline),
                names_to = "period",
                values_to = "n_obs")
 # add row for the totals
 total_tobind = data.frame(
-  "primary_group" = c("all", "all"),
-  "period" = c("Bioblitz Effect", "Baseline"),
+  "primary_group" = c("All", "All"),
+  "period" = c("Funding Effect", "Baseline"),
   "n_obs" = c(boost_total, exp_total)
 )
 group_obs_l = rbind(group_obs_l, total_tobind)
-group_obs_l$period = factor(group_obs_l$period, levels = c("Bioblitz Effect", "Baseline"))
+group_obs_l$period = factor(group_obs_l$period, levels = c("Funding Effect", "Baseline"))
 group_obs_l$primary_group = factor(group_obs_l$primary_group, 
-                                   levels = c("QCBS Grantees", "GCB Grantees", "BC Biodiversity 2025 Team", "all"))
+                                   levels = c("QCBS Grantees", "GCB Grantees", "BC Biodiversity 2025 Team", "All"))
 (A = ggplot(data = group_obs_l) +
     geom_bar(aes(
       x = primary_group,
@@ -116,16 +116,20 @@ group_obs_l$primary_group = factor(group_obs_l$primary_group,
               size = 5,  vjust = -1, fontface = "bold") +
     geom_text( y = btg_total,
                label = paste0(signif((btg_total/exp_total), digits = 2),"x"),
-               x = "all", 
+               x = "All", 
                size = 5,  vjust = -1, fontface = "bold") +
-    scale_fill_manual(values = c("goldenrod1", "grey10"), name = "") +
+    scale_fill_manual(values = c("#B48EAD", "grey10"), name = "") +
     coord_cartesian(ylim = c(0,2e5)) +
+    # wrap long text in the x axis
+    scale_x_discrete(labels = function(x) str_wrap(x, width = 10)) +
     labs(y = "Observations", 
          x = "Funding") +
     hrbrthemes::theme_ipsum_rc(base_size = 14,
                                axis_title_size = 14,
                                axis_title_face = "bold") +
     theme(legend.position = "top",
-          panel.grid.major.y = element_blank()) ) 
+          panel.grid.major.y = element_blank(),
+          panel.grid.major.x = element_blank(),) ) 
 ggsave("figures/btg-effect/barplot-fundingeffect.png", width = 6.6, height = 6.03)
 
+saveRDS(A, "outputs/btg-effect-figs/barplot-fundingeffect.rds")

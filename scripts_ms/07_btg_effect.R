@@ -8,12 +8,14 @@ btg = read.csv("outputs/users/btg_users_groups.csv", row.names = 1)
 length(unique(btg$user_login)) # 1123 people
 
 # load parquet file 
-inat = arrow::open_dataset("data/heavy/BTG-data/inaturalist-canada-dec2025_smaller.parquet") |>
+inat = arrow::open_dataset("data/heavy/BTG-data/inaturalist-canada-dec2025_smAller.parquet") |>
   filter(year %in% c("2024", "2025"), month %in% c("06", "07", "08", "09"))
 
 # load observer categories
 user_categories = readRDS("outputs/users/observer_categories.rds")
 user_new = read.csv("outputs/users/btg_users_newin2025.csv")
+
+# number of observers during BTG ===============================================
 
 ## Observation rate during BTG =================================================
 
@@ -88,6 +90,7 @@ group_obs = obs.compare |>
   mutate("BTG Effect" = BTG-Baseline,
          "ratio" = (BTG/Baseline))
 group_obs$ratio[which(group_obs$groups == "new")] <- NA
+group_obs$groups = str_to_title(group_obs$groups)
 
 # long version for plotting
 group_obs_l = group_obs |>
@@ -97,21 +100,23 @@ group_obs_l = group_obs |>
               values_to = "n_obs")
 # add row for the totals
 total_tobind = data.frame(
-  "groups" = c("all", "all"),
+  "groups" = c("All", "All"),
   "period" = c("BTG Effect", "Baseline"),
   "n_obs" = c(boost_total, exp_total)
 )
 group_obs_l = rbind(group_obs_l, total_tobind)
 group_obs_l$period = factor(group_obs_l$period, levels = c("BTG Effect", "Baseline"))
-group_obs_l$groups = factor(group_obs_l$groups, levels = c("new", "casual", "dabbler", 
-                                                       "enthusiast", "superuser", "all"))
+group_obs_l$groups = str_to_title(group_obs_l$groups)
+group_obs_l$groups = factor(group_obs_l$groups, 
+                            levels = c("New", "Casual", "Dabbler", 
+                                                       "Enthusiast", "Superuser", "All"))
 (A = ggplot(data = group_obs_l) +
     geom_bar(aes(
       x = groups,
       y = n_obs,
       fill = period
     ), stat = "identity", position = "stack") +
-    geom_text(data = filter(group_obs, groups != "new"),
+    geom_text(data = filter(group_obs, groups != "New"),
               aes(
                 y = BTG,
                 label = paste0(signif(ratio, 2),"x"),
@@ -119,9 +124,10 @@ group_obs_l$groups = factor(group_obs_l$groups, levels = c("new", "casual", "dab
               size = 5,  vjust = -1, fontface = "bold") +
     geom_text( y = btg_total,
                label = paste0(signif((btg_total/exp_total), digits = 2),"x"),
-               x = "all", 
+               x = "All", 
                size = 5,  vjust = -1, fontface = "bold") +
-    scale_fill_manual(values = c("goldenrod1", "grey10"), name = "") +
+    scale_fill_manual(values = c("#A3BE8C", "grey10"), name = "") +
+    scale_y_continuous(labels = scales::label_number()) +
     coord_cartesian(ylim = c(0,6e5)) +
     labs(y = "Observations", 
          x = "BTG members") +
@@ -129,20 +135,9 @@ group_obs_l$groups = factor(group_obs_l$groups, levels = c("new", "casual", "dab
                                axis_title_size = 14,
                                axis_title_face = "bold") +
     theme(legend.position = "top",
-          panel.grid.major.y = element_blank()) ) 
+          panel.grid.major.y = element_blank(),
+          panel.grid.major.x = element_blank()))  
 ggsave("figures/btg-effect/barplot-btgeffect.png", width = 6.6, height = 6.03)
 
 
-
-
-
-## NOTES =======================================================================
-# baseline: expected number of observations given average efficiency
-# baseline = rate * active_days
-
-# boost: difference from baseline
-# boost = btg - baseline
-
-# totaled across everyone!
-
-## BTG members: compare users to BTG 2025 and same window but 2024
+saveRDS(A, "outputs/btg-effect-figs/barplot-btgeffect.rds")

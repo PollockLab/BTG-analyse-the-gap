@@ -97,6 +97,7 @@ group_obs = obs.compare |>
   ) |>
   mutate("Bioblitz Effect" = Bioblitz-Baseline,
          "ratio" = (Bioblitz/Baseline))
+group_obs$groups = str_to_title(group_obs$groups)
 
 # long version for plotting
 group_obs_l = group_obs |>
@@ -106,14 +107,16 @@ group_obs_l = group_obs |>
                values_to = "n_obs")
 # add row for the totals
 total_tobind = data.frame(
-  "groups" = c("all", "all"),
+  "groups" = c("All", "All"),
   "period" = c("Bioblitz Effect", "Baseline"),
   "n_obs" = c(boost_total, exp_total)
 )
 group_obs_l = rbind(group_obs_l, total_tobind)
 group_obs_l$period = factor(group_obs_l$period, levels = c("Bioblitz Effect", "Baseline"))
-group_obs_l$groups = factor(group_obs_l$groups, levels = c("new", "casual", "dabbler", 
-                                                           "enthusiast", "superuser", "all"))
+group_obs_l$groups = str_to_title(group_obs_l$groups)
+group_obs_l$groups = factor(group_obs_l$groups, 
+                            levels = c("New", "Casual", "Dabbler", 
+                                       "Enthusiast", "Superuser", "All"))
 (A = ggplot(data = group_obs_l) +
     geom_bar(aes(
       x = groups,
@@ -128,9 +131,9 @@ group_obs_l$groups = factor(group_obs_l$groups, levels = c("new", "casual", "dab
               size = 5,  vjust = -1, fontface = "bold") +
     geom_text( y = btg_total,
                label = paste0(signif((btg_total/exp_total), digits = 2),"x"),
-               x = "all", 
+               x = "All", 
                size = 5,  vjust = -1, fontface = "bold") +
-    scale_fill_manual(values = c("goldenrod1", "grey10"), name = "") +
+    scale_fill_manual(values = c("#8FBCBB", "grey10"), name = "") +
     coord_cartesian(ylim = c(0,7e4)) +
     labs(y = "Observations", 
          x = "Bioblitz members") +
@@ -138,8 +141,10 @@ group_obs_l$groups = factor(group_obs_l$groups, levels = c("new", "casual", "dab
                                axis_title_size = 14,
                                axis_title_face = "bold") +
     theme(legend.position = "top",
-          panel.grid.major.y = element_blank()) ) 
+          panel.grid.major.y = element_blank(),
+          panel.grid.major.x = element_blank()) ) 
 ggsave("figures/btg-effect/barplot-bioblitzeffect.png", width = 6.6, height = 6.03)
+saveRDS(A, "outputs/btg-effect-figs/barplot-bioblitzeffect.rds")
 
 
 
