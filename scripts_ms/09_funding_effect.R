@@ -4,16 +4,26 @@ library(tidyverse)
 library(arrow)
 
 # load parquet file 
-inat = arrow::open_dataset("data/heavy/BTG-data/inaturalist-canada-dec2025_smAller.parquet") |>
-  filter(year %in% c("2024", "2025"), month %in% c("06", "07", "08", "09"))
+inat = arrow::open_dataset("data/heavy/BTG-data/inaturalist-canada-dec2025_smaller.parquet") |>
+  filter(year %in% c("2018", "2024", "2025"), month %in% c("06", "07", "08", "09"))
 
 # load funded observers
 funded = read.csv("outputs/users/btg_users_participants.csv", row.names = 1) |>
   filter(primary_group %in% c("QCBS Grantees", "BC Biodiversity 2025 Team", "GCB Grantees")) |>
-  select(-group)
+  select(-group) |> distinct()
 
 # unique users
 fundees = unique(funded$user_login) # 131
+
+# bc biodiversity program users who had accounts in 2018
+bc = funded |> filter(primary_group == "BC Biodiversity 2025 Team")
+
+pre.bc = inat |> 
+  filter(year == "2018", 
+         user_login %in% bc$user_login) |> 
+  collect()
+
+bc$user_login %in% unique(pre.bc$user_login) # 3 people did not have accounts
 
 ## Observation rate during BTG =================================================
 
@@ -56,6 +66,13 @@ obs.daily = left_join(obs.daily, funded, multiple = "any")
 # based on days active in 2025 x their average rate in 2024
 
 # get average rate in 2024
+rate.BCbaseline = obs.daily |> 
+  filter(year == "2018",
+         primary_group == "BC Biodiversity 2025 Team") |>
+  select(c(user_login, rate, year, primary_group)) |>
+  rename("rate_2018" = "rate")
+
+# get average rate in 2024
 rate.baseline = obs.daily |> 
   filter(year == "2024") |>
   select(c(user_login, rate, year, primary_group)) |>
@@ -71,6 +88,14 @@ obs.compare = obs.daily |>
 obs.compare$rate_2024[which(is.na(obs.compare$rate_2024))] <- 0
 obs.compare$n_obs_expected[which(is.na(obs.compare$rate_2024))] <- 0
 
+# add 2018 baseline for the BC Team
+obs.compare = obs.compare |> 
+  left_join(rate.BCbaseline, 
+            by = c("user_login", "primary_group")) |>
+  mutate("n_obs_expected_2018baseline" = rate_2018*days_active)
+index = which(obs.compare$primary_group == "BC Biodiversity 2025 Team")
+obs.compare$n_obs_expected[index] <- obs.compare$n_obs_expected_2018baseline[index]
+
 # TOTAL: summary
 btg_total = sum(obs.compare$n_obs, na.rm = T)
 exp_total = sum(obs.compare$n_obs_expected, na.rm = T)
@@ -85,6 +110,16 @@ group_obs = obs.compare |>
   ) |>
   mutate("Funding Effect" = Bioblitz-Baseline,
          "ratio" = (Bioblitz/Baseline))
+# add row for the totals
+total_tobind = data.frame(
+  "groups" = c("All"),
+  "Bioblitz" = btg_total,
+  "Baseline" = exp_total,
+  "`Bioblitz Effect`" = btg_total-exp_total,
+  "ratio" = btg_total/exp_total
+)
+colnames(total_tobind) = colnames(group_obs)
+group_obs = rbind(group_obs, total_tobind)
 
 # long version for plotting
 group_obs_l = group_obs |>
@@ -92,16 +127,17 @@ group_obs_l = group_obs |>
   pivot_longer(cols = c(`Funding Effect`, Baseline),
                names_to = "period",
                values_to = "n_obs")
-# add row for the totals
-total_tobind = data.frame(
-  "primary_group" = c("All", "All"),
-  "period" = c("Funding Effect", "Baseline"),
-  "n_obs" = c(boost_total, exp_total)
-)
-group_obs_l = rbind(group_obs_l, total_tobind)
 group_obs_l$period = factor(group_obs_l$period, levels = c("Funding Effect", "Baseline"))
 group_obs_l$primary_group = factor(group_obs_l$primary_group, 
-                                   levels = c("QCBS Grantees", "GCB Grantees", "BC Biodiversity 2025 Team", "All"))
+                                   levels = c("QCBS Grantees", 
+                                              "GCB Grantees", 
+                                              "BC Biodiversity 2025 Team", 
+                                              "All"))
+group_obs$primary_group = factor(group_obs$primary_group, 
+                                   levels = c("QCBS Grantees", 
+                                              "GCB Grantees", 
+                                              "BC Biodiversity 2025 Team", 
+                                              "All"))
 (A = ggplot(data = group_obs_l) +
     geom_bar(aes(
       x = primary_group,
@@ -123,14 +159,52 @@ group_obs_l$primary_group = factor(group_obs_l$primary_group,
     # wrap long text in the x axis
     scale_x_discrete(labels = function(x) str_wrap(x, width = 10)) +
     scale_y_continuous(labels = scales::label_number(scale = 0.001, suffix = "k")) +
-    labs(y = "Observations", 
-         x = "Funding") +
+    labs(y = "Observations") +
     hrbrthemes::theme_ipsum_rc(base_size = 14,
                                axis_title_size = 14,
                                axis_title_face = "bold") +
     theme(legend.position = "top",
-          panel.grid.major.y = element_blank(),
-          panel.grid.major.x = element_blank(),) ) 
+          panel.grid.minor.y = element_blank(),
+          panel.grid.major.x = element_blank()))
 ggsave("figures/btg-effect/barplot-fundingeffect.png", width = 6.6, height = 6.03)
-
 saveRDS(A, "outputs/btg-effect-figs/barplot-fundingeffect.rds")
+
+(A_nolabels = ggplot(data = group_obs_l) +
+    geom_bar(aes(
+      x = primary_group,
+      y = n_obs,
+      fill = period
+    ), stat = "identity", position = "stack") +
+    scale_fill_manual(values = c("#B48EAD", "grey10"), name = "") +
+    coord_cartesian(ylim = c(0,2e5)) +
+    # wrap long text in the x axis
+    scale_x_discrete(labels = function(x) str_wrap(x, width = 10)) +
+    scale_y_continuous(labels = scales::label_number(scale = 0.001, suffix = "k")) +
+    labs(y = "Observations") +
+    hrbrthemes::theme_ipsum_rc(base_size = 14,
+                               axis_title_size = 14,
+                               axis_title_face = "bold") +
+    theme(legend.position = "top",
+          panel.grid.minor.y = element_blank(),
+          panel.grid.major.x = element_blank()))
+ggsave("figures/btg-effect/barplot-fundingeffect-nolabels.png", width = 6.6, height = 6.03)
+saveRDS(A_nolabels, "outputs/btg-effect-figs/barplot-fundingeffect-nolabels.rds")
+
+(B = ggplot(data = group_obs) +
+    geom_bar(aes(
+      x = primary_group,
+      y = ratio), 
+      stat = "identity", 
+      position = "stack",
+      fill = "#B48EAD") +
+    geom_hline(yintercept =  2, lty = 2) +
+    labs(y = "Observations", 
+         x = "") +
+    hrbrthemes::theme_ipsum_rc(base_size = 14,
+                               axis_title_size = 14,
+                               axis_title_face = "bold") +
+    theme(legend.position = "none",
+          panel.grid.minor.y = element_blank(),
+          panel.grid.major.x = element_blank()))  
+ggsave("figures/btg-effect/barplot-fundingeffect-ratio.png", width = 6.6, height = 6.03)
+saveRDS(B, "outputs/btg-effect-figs/barplot-fundingeffect-ratio.rds")
