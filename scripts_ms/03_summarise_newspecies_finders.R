@@ -11,7 +11,6 @@ newsp$user_login |> unique() |> length()
 bioblitz = read.csv("outputs/bioblitzes/master-bioblitz-obs.csv", row.names = 1)
 newsp.blitz = filter(bioblitz, taxon.name %in% newsp$scientific_name)
 write.csv(newsp.blitz, "outputs/missing-species/newsp_finders_bioblitzes.csv")
-
 unique(newsp.blitz$taxon.name)
 # load user groups 
 users = read.csv("outputs/users/btg_users_groups.csv", row.names = 1)
@@ -50,11 +49,10 @@ df.groups2 = df.groups |>
 ## average new species for BC Biodiversity Program
 
 bc.avg = df.groups2 |>
-  filter(primary_group %in% c("BC Biodiversity", "BC Biodiversity 2025 Team")) |>
-  summarise("mean_sp" = mean(n_sp),
-            "sd_sp" = sd(n_sp),
-            "max_sp" = max(n_sp))
-
+  filter(primary_group %in% c("BC Biodiversity", "BC Biodiversity 2025 Team")) 
+data.frame("mean_sp" = mean(bc.avg$n_sp),
+            "sd_sp" = sd(bc.avg$n_sp),
+            "max_sp" = max(bc.avg$n_sp),)
 # avg for other groups 
 group.avg = df.groups2 |>
   group_by(primary_group) |>

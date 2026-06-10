@@ -11,6 +11,27 @@ library(sf)
 # load parquet file
 inat = arrow::open_dataset("data/heavy/BTG-data/inaturalist-canada-dec2025_smaller.parquet")
 
+# custom list by Nathan and Brian of species that had obs prior to 2025 despite this filtering
+sp_to_remove_checked = c("Drepanocladus polygamus",
+                         "Castilleja minor",
+                         "Cicindela fulgida",
+                         "Cicindela parowana",
+                         "Crataegus laurentiana",
+                         "Crataegus chrysocarpa",
+                         "Eubosmina longispina",
+                         "Bosmina coregoni",
+                         "Hyssopus thymus",
+                         "Hyssopus officinalis",
+                         "Numenius phaeopus",
+                         "Poa leptocoma",
+                         "Poa paucispicula",
+                         "Podosphaera clandestina",
+                         "Podosphaera aucupariae",
+                         "Veronica agrestis",
+                         "Veronica hederifolia",
+                         "Veronica alpina",
+                         "Veronica wormskjoldii")
+
 # find species that were not found before 2025 ---------------------------------
 
 missing_sp = inat |>
@@ -20,6 +41,8 @@ missing_sp = inat |>
   na.omit() |>
   collect()
 missing_sp$year = as.numeric(missing_sp$year)
+# change Animalia to "Other Animalia"
+missing_sp$iconic_taxon_name = gsub("Animalia", "Other Animalia", missing_sp$iconic_taxon_name)
 
 sp_minyear = missing_sp |>
   group_by(scientific_name) |>
@@ -35,7 +58,8 @@ temp = stringr::str_count(sp_2025$scientific_name, "\\w+")
 # find species with nothing in the species column
 to_remove = which(temp != 2)
 to_remove = c(to_remove, grep("×", sp_2025$scientific_name)) # note: this is not a normal "x"
-to_remove = c(to_remove, grep("Mustela furo", sp_2025$scientific_name)) # note: this is not a normal "x"
+to_remove = c(to_remove, grep("Mustela furo", sp_2025$scientific_name)) 
+to_remove = c(to_remove, which(sp_2025$scientific_name %in% sp_to_remove_checked))
 
 # remove species that have > 2 words, or that include the hybrid symbol
 sp_2025 <- sp_2025[-to_remove,]
@@ -65,6 +89,8 @@ btg = btg.pq |>
   group_by(iconic_taxon_name, scientific_name) |>
   summarise("n" = n())
 btg = collect(btg)
+# change Animalia to "Other Animalia"
+btg$iconic_taxon_name = gsub("Animalia", "Other Animalia", btg$iconic_taxon_name)
 # filter for species in the Apr-Oct timeframe parquet
 sp_btg = sp_2025[which(sp_2025$scientific_name %in% btg$scientific_name),]
 
@@ -91,6 +117,7 @@ new.groups = inat |>
   summarise("n" = n()) |>
   collect()
 new.groups = filter(new.groups, iconic_taxon_name != "NA")
+new.groups$iconic_taxon_name = gsub("Animalia", "Other Animalia", new.groups$iconic_taxon_name)
 # reorder for plotting
 new.groups$iconic_taxon_name = factor(new.groups$iconic_taxon_name,
                                       levels = new.groups$iconic_taxon_name[order(new.groups$n)])
@@ -131,6 +158,8 @@ obs.newsp = btg.pq |>
   group_by(iconic_taxon_name, scientific_name) |>
   summarise("n" = n()) |>
   collect()
+obs.newsp$iconic_taxon_name = gsub("Animalia", "Other Animalia", obs.newsp$iconic_taxon_name)
+
 write.csv(obs.newsp, "outputs/missing-species/newsp_nobs_btg_APR1OCT1.csv")
 
 # average obs per species
@@ -145,6 +174,7 @@ totalobs = btg.pq |>
   summarise("n" = n()) |>
   summarise("nn" = sum(n)) |>
   collect()
+totalobs$iconic_taxon_name = gsub("Animalia", "Other Animalia", totalobs$iconic_taxon_name)
 obs.newsp.sum/sum(totalobs$nn)
 
 # map the new observations -----------------------------------------------------
@@ -158,6 +188,7 @@ newsp.pts = btg.pq |>
   sf::st_as_sf(coords = c("longitude", "latitude"), crs = "epsg:4326")
 newsp.pts = st_transform(newsp.pts, "EPSG:3347")
 # reorder for plotting
+newsp.pts$iconic_taxon_name = gsub("Animalia", "Other Animalia", newsp.pts$iconic_taxon_name)
 newsp.pts$iconic_taxon_name = factor(newsp.pts$iconic_taxon_name,
                                      levels = new.groups$iconic_taxon_name[order(new.groups$n)])
 # canada polygon
@@ -211,6 +242,7 @@ new.groups = btg.pq |>
   collect()
 new.groups = filter(new.groups, iconic_taxon_name != "NA")
 # reorder for plotting
+new.groups$iconic_taxon_name = gsub("Animalia", "Other Animalia", new.groups$iconic_taxon_name)
 new.groups$iconic_taxon_name = factor(new.groups$iconic_taxon_name,
                                       levels = new.groups$iconic_taxon_name[order(new.groups$n)])
 total.sp = sum(new.groups$n)
