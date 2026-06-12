@@ -89,56 +89,19 @@ group_obs = obs.compare |>
     "Baseline" = sum(n_obs_expected, na.rm = T)
   ) |>
   mutate("BTG Effect" = BTG-Baseline,
-         "ratio" = (BTG/Baseline))
-group_obs$ratio[which(group_obs$groups == "new")] <- NA
-group_obs$groups = str_to_title(group_obs$groups)
+         "ratio" = (BTG/Baseline)) |>
+  mutate("New" = is.infinite(ratio))
+group_obs$ratio[which(group_obs$New == TRUE)] <- NA
 
 # long version for plotting
-group_obs_l = group_obs |>
+group_obs_l = group_obs  |>
+  group_by(New) |>
+  summarise("BTG" = sum(BTG, na.rm = T),
+            "Baseline" = sum(Baseline, na.rm = T),
+            "BTG Effect" = sum(`BTG Effect`, na.rm = T))
   select(-c(BTG, ratio)) |>
   pivot_longer(cols = c(`BTG Effect`, Baseline),
                names_to = "period",
-               values_to = "n_obs")
-# add row for the totals
-total_tobind = data.frame(
-  "groups" = c("All", "All"),
-  "period" = c("BTG Effect", "Baseline"),
-  "n_obs" = c(boost_total, exp_total)
-)
-group_obs_l = rbind(group_obs_l, total_tobind)
-group_obs_l$period = factor(group_obs_l$period, levels = c("BTG Effect", "Baseline"))
-group_obs_l$groups = str_to_title(group_obs_l$groups)
-group_obs_l$groups = factor(group_obs_l$groups, 
-                            levels = c("New", "Casual", "Dabbler", 
-                                       "Enthusiast", "Superuser", "All"))
-(A = ggplot(data = group_obs_l) +
-    geom_bar(aes(
-      x = groups,
-      y = n_obs,
-      fill = period
-    ), stat = "identity", position = "stack") +
-    geom_text(data = filter(group_obs, groups != "New"),
-              aes(
-                y = BTG,
-                label = paste0(signif(ratio, 2),"x"),
-                x = groups), 
-              size = 5,  vjust = -1, fontface = "bold") +
-    geom_text( y = btg_total,
-               label = paste0(signif((btg_total/exp_total), digits = 2),"x"),
-               x = "All", 
-               size = 5,  vjust = -1, fontface = "bold") +
-    scale_fill_manual(values = c("#A3BE8C", "grey10"), name = "") +
-    scale_y_continuous(labels = scales::label_number(scale = 0.001, suffix = "k")) +
-    coord_cartesian(ylim = c(0,6e5)) +
-    labs(y = "Observations", 
-         x = "BTG members") +
-    hrbrthemes::theme_ipsum_rc(base_size = 14,
-                               axis_title_size = 14,
-                               axis_title_face = "bold") +
-    theme(legend.position = "top",
-          panel.grid.minor.y = element_blank(),
-          panel.grid.major.x = element_blank()))  
-ggsave("figures/btg-effect/barplot-btgeffect-nonmembers.png", width = 6.6, height = 6.03)
-
-
-saveRDS(A, "outputs/btg-effect-figs/barplot-btgeffect-nonmembers.rds")
+               values_to = "n_obs") 
+  group_obs_l$ratio = group_obs_l$BTG/group_obs_l$Baseline
+saveRDS(group_obs_l, "outputs/btg-effect-figs/non-btg-members.rds")
