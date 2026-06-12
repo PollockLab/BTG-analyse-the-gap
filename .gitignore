@@ -62,3 +62,7 @@ BTG-analyse-the-gap.Rproj
 outputs/bioblitzes/master-bioblitz-obs.csv
 scripts/usertype-comparisons/quick-contribution-johnbriannathan.R
 scripts/usertype-comparisons/btg-user-contributions.R
+scripts/climate-gap/xx-climate-gap.R
+scripts/other/04_climate_gap.R
+scripts/other/04_climate_gap2.R
+scripts/climate-gap/02_climate-gap.R
