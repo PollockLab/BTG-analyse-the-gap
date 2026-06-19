@@ -216,6 +216,13 @@ finders.spnames = newsp.pts |>
   summarise("n" = n())
 saveRDS(finders.spnames, "outputs/missing-species/newsp_finders_sf.rds")
 
+# how many are BTG-affiliated?
+btg_users = read.csv("outputs/users/btg_users_participants_primarygroups.csv")
+finders_temp = finders.spnames |> sf::st_drop_geometry() |>
+  dplyr::filter(user_login %in% btg_users$user_login)
+length(unique(finders_temp$scientific_name)) # how many sp?
+length(unique(finders_temp$user_login)) # how many sp?
+
 finders = newsp.pts |>
   group_by(user_login) |>
   distinct(scientific_name) |>
