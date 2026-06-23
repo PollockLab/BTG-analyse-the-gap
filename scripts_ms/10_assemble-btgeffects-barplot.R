@@ -43,7 +43,7 @@ C2 = readRDS("outputs/btg-effect-figs/barplot-fundingeffect-ratio.rds")
 A2 = A2 + theme(plot.margin = margin(r = 0.1, t = 1, b = 0),
               legend.text = element_text(size = 16),
               axis.text.y = element_text(size = 18),
-              axis.text.x = element_text(size = 13, angle = 45, hjust = 1, vjust = 1.1),
+              axis.text.x = element_text(size = 14, angle = 45, hjust = 1, vjust = 1.1),
               axis.title.y = element_text(size = 20,hjust = .5),
               axis.title.x = element_blank(),
               legend.position = "none") +
@@ -51,7 +51,7 @@ A2 = A2 + theme(plot.margin = margin(r = 0.1, t = 1, b = 0),
   scale_y_sqrt(labels = scales::label_number(scale =1, suffix = "x"))
 (B2 = B2 + theme(axis.title.y = element_blank(),
               plot.margin = margin(l = 0.1, t = 1, b = 0),
-              axis.text.x = element_text(size = 13, angle = 45, hjust = 1, vjust = 1.1),
+              axis.text.x = element_text(size = 14, angle = 45, hjust = 1, vjust = 1.1),
               axis.text.y = element_blank(),
               legend.text = element_text(size = 16),
               axis.title.x = element_blank(),
@@ -59,7 +59,7 @@ A2 = A2 + theme(plot.margin = margin(r = 0.1, t = 1, b = 0),
   coord_cartesian(ylim = c(0,12))+
   scale_y_sqrt())
 C2 = C2 + theme(axis.title.y = element_blank(),
-                axis.text.x = element_text(size = 13, angle = 45, hjust = 1, vjust = 1.1),
+                axis.text.x = element_text(size = 14, angle = 45, hjust = 1, vjust = 1.1),
                 axis.text.y = element_blank(),
               plot.margin = margin(l = 0.1, t = 1, b = 0),
               legend.text = element_text(size = 16),

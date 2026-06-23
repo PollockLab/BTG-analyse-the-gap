@@ -15,8 +15,6 @@ inat = arrow::open_dataset("data/heavy/BTG-data/inaturalist-canada-dec2025_smAll
 user_categories = readRDS("outputs/users/observer_categories.rds")
 user_new = read.csv("outputs/users/btg_users_newin2025.csv")
 
-# number of observers during BTG ===============================================
-
 ## Observation rate during BTG =================================================
 
 # filter to users that participated in btg
@@ -51,6 +49,10 @@ obs.daily = inat.notbtg |>
 
 # calculate daily rate
 obs.daily$rate = obs.daily$n_obs/obs.daily$days_active
+
+
+# average daily rate
+mean(obs.daily$rate) # 2.870469
 
 # calculate baseline expectation of number of observations per person during BTG
 # based on days active in 2025 x their average rate in 2024

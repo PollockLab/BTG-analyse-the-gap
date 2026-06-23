@@ -120,6 +120,8 @@ total_tobind = data.frame(
 )
 colnames(total_tobind) = colnames(group_obs)
 group_obs = rbind(group_obs, total_tobind)
+group_obs$primary_group = gsub(" Grantees", "", group_obs$primary_group) 
+group_obs$primary_group[which(group_obs$primary_group == "BC Biodiversity 2025 Team")] <- "BCBP"
 
 # long version for plotting
 group_obs_l = group_obs |>
@@ -129,14 +131,14 @@ group_obs_l = group_obs |>
                values_to = "n_obs")
 group_obs_l$period = factor(group_obs_l$period, levels = c("Funding Effect", "Baseline"))
 group_obs_l$primary_group = factor(group_obs_l$primary_group, 
-                                   levels = c("QCBS Grantees", 
-                                              "GCB Grantees", 
-                                              "BC Biodiversity 2025 Team", 
+                                   levels = c("QCBS", 
+                                              "GCB", 
+                                              "BCBP", 
                                               "All"))
 group_obs$primary_group = factor(group_obs$primary_group, 
-                                   levels = c("QCBS Grantees", 
-                                              "GCB Grantees", 
-                                              "BC Biodiversity 2025 Team", 
+                                   levels = c("QCBS", 
+                                              "GCB", 
+                                              "BCBP", 
                                               "All"))
 (A = ggplot(data = group_obs_l) +
     geom_bar(aes(
@@ -159,7 +161,7 @@ group_obs$primary_group = factor(group_obs$primary_group,
     # wrap long text in the x axis
     scale_x_discrete(labels = function(x) str_wrap(x, width = 10)) +
     scale_y_continuous(labels = scales::label_number(scale = 0.001, suffix = "k")) +
-    labs(y = "Observations") +
+    labs(y = "Observations", x = "") +
     hrbrthemes::theme_ipsum_rc(base_size = 14,
                                axis_title_size = 14,
                                axis_title_face = "bold") +

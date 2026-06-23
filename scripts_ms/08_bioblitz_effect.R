@@ -60,6 +60,13 @@ obs.daily = inat.btg |>
 # calculate daily rate
 obs.daily$rate = obs.daily$n_obs/obs.daily$days_active
 
+# average daily rate
+mean(obs.daily$rate) # 9.319846
+sd(obs.daily$rate) # 18.65
+sd(obs.daily$rate)/sqrt(length(obs.daily$rate)) #se = 0.37
+saveRDS(obs.daily, "outputs/btg-effect-figs/bioblitz_effect_obsdaily_table.rds")
+
+
 # calculate baseline expectation of number of observations per person during bioblitz
 # based on days active in the bioblitz x their average rate for the rest of BTG
 
