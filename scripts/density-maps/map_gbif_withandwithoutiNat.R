@@ -36,13 +36,13 @@ base100k = project(base100k, crs(canada))
 #   # keep only the useful columns for mapping
 #   select(c(decimallatitude, decimallongitude, datasetkey, class)) |>
 #   # round lat long to make some "cells"
-#   mutate(latitude = round(decimallatitude,1),
-#          longitude = round(decimallongitude,1)) |>
+#   mutate(latitude = round(decimallatitude,2),
+#          longitude = round(decimallongitude,2)) |>
 #   # count!
 #   group_by(latitude, longitude, datasetkey, class) |>
 #   summarise("n_obs" = n())
-#   
-# # collect it into R
+# #   
+# # # collect it into R
 # gbifcan = gbifcan |> collect()
 # arrow::write_parquet(gbifcan, "data/heavy/BTG-data/gbif_all_latlong.parquet")
 
@@ -60,9 +60,11 @@ r_gbif_nobirds.pts = gbifcan |>
   group_by(longitude, latitude) |>
   summarise("n" = sum(n_obs, na.rm = T)) |>
   na.omit() |>
-  vect(crs = "epsg:4326",
+  vect(crs = "EPSG:4326",
        geom = c("longitude", "latitude"))
-r_gbif_nobirds.pts = project(r_gbif_nobirds.pts, crs(base100k))
+r_gbif_nobirds.pts = project(r_gbif_nobirds.pts, "EPSG:3347")
+base100k = project(base100k, "EPSG:3347")
+
 r_gbif_nobirds.rast = rasterize(r_gbif_nobirds.pts, 
                                 base100k, 
                                 field = "n",
@@ -122,6 +124,9 @@ r_gbif_nobirds_inat.rast = crop(r_gbif_nobirds_inat.rast, canada, mask = TRUE)
 # proportion of observations represented by inat
 diffmap = r_gbif_nobirds_inat.rast/r_gbif_nobirds.rast
 terra::writeRaster(diffmap, "outputs/summaries/map_gbif_inaturalistcontribution.tif")
+
+
+
 
 # aggregate a little bit to make it cleaner
 diffmap_lg = aggregate(diffmap, factor = 1, fun = "mean", na.rm = T)
