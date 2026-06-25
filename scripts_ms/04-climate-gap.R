@@ -76,9 +76,14 @@ df_post = values(clim_post, data.frame = TRUE, na.rm = TRUE) |> as.data.frame()
    colorspace::scale_fill_continuous_sequential("Batlow",
                                                 na.value = "transparent", 
                                                 rev = F,
-                                                name = "Climate frequency", 
+                                                name = "", 
                                                 trans = "sqrt") +
-   labs(x = "Annual mean temperature", y = "Annual precipitation")) 
+   labs(x = "Annual mean temperature", y = "Annual precipitation")   +
+   hrbrthemes::theme_ipsum_rc(base_size = 20,
+                              axis_title_size = 24) +
+   theme(legend.position = "top", legend.key.width = unit(3,"cm"))) 
+ggsave("figures/climate gap/pca_climatefrequency.png", width = 7.83, height = 8.5)
+
 bins_canada <- ggplot_build(p)$data[[1]] |>
   select(c(xbin, ybin, value, count, density, xmin:ymax))
 colnames(bins_canada)[grep("count", colnames(bins_canada))] <- "count.canada"
@@ -155,6 +160,35 @@ ggplot() +
                              base_size = 14) +
   theme(legend.position = "top", legend.key.width = unit(2,"cm"))
 ggsave("figures/climate gap/map_climate_samplingfrequency_PREJUN12025.png", width = 12.5, height = 7.9)
+
+# 2D plot of the sampled climate space
+df = bins_canada
+df$x_coord = (df$xmin+df$xmax)/2
+df$y_coord = (df$ymin+df$ymax)/2
+bins_24_plot = bins_24_map
+bins_24_plot$x_coord = (bins_24_plot$xmin+bins_24_plot$xmax)/2
+bins_24_plot$y_coord = (bins_24_plot$ymin+bins_24_plot$ymax)/2
+(p = ggplot() +
+    # All climate bins
+    geom_tile(data = df,
+              aes(x = x_coord, y = y_coord,
+                  fill = NULL), fill = "grey85") +
+    ## Grey out the unsampled climate bins
+    geom_tile(data = bins_24_plot,
+              aes(x = x_coord, y = y_coord, fill = count.pre)) +
+    colorspace::scale_fill_continuous_sequential("Batlow",
+                                                 name = "",
+                                                 na.value = "transparent", 
+                                                 rev = F, 
+                                                 trans = "sqrt") +
+    labs(x = "Annual mean temperature", y = "Annual precipitation"))  +
+  hrbrthemes::theme_ipsum_rc(base_size = 20,
+                             axis_title_size = 24) +
+  theme(legend.position = "top", legend.key.width = unit(3,"cm"))
+ggsave("figures/climate gap/pca_samplingfrequency_PREJUN12025.png", width = 7.83, height = 8.5)
+
+
+
 
 # bin the BTG samples
 df_25$xbin = NA
