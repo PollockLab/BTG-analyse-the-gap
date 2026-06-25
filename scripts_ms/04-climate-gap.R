@@ -85,6 +85,35 @@ colnames(bins_canada)[grep("count", colnames(bins_canada))] <- "count.canada"
 colnames(bins_canada)[grep("density", colnames(bins_canada))] <- "density.canada"
 bins_canada$bin = paste0(bins_canada$xbin, "_", bins_canada$ybin)
 
+## map the climate cell density in geographical space
+bins_raster = clim[[1]] 
+bins_raster[!is.na(bins_raster)] <- 0
+bins_canada$BIN = paste0(bins_canada$xbin, "_", bins_canada$ybin)
+for(i in 1:nrow(bins_canada)){
+  index = clim$wc2.1_10m_bio_1 >= bins_canada$xmin[i] & clim$wc2.1_10m_bio_1 < bins_canada$xmax[i] & clim$wc2.1_10m_bio_12 >= bins_canada$ymin[i] & clim$wc2.1_10m_bio_12 < bins_canada$ymax[i] 
+  bins_raster[index] <- bins_canada$count[i]
+}
+writeRaster(bins_raster, "outputs/climate-gap/map-sampledclimates-bins-countcanada.tif", overwrite = T)
+bins_raster = rast("outputs/climate-gap/map-sampledclimates-bins-countcanada.tif")
+
+# map
+ggplot() +
+  geom_sf(data = canada, fill = "grey90", col = "grey90") +
+  geom_spatraster(data = bins_raster) +
+  colorspace::scale_fill_continuous_sequential("Batlow",
+                                               name = "Climate frequency",
+                                               trans = "sqrt",
+                                               na.value = "transparent", 
+                                               rev = F) +
+  hrbrthemes::theme_ipsum_rc(grid = FALSE, 
+                             axis = FALSE, axis_text_size = 1,
+                             ticks = FALSE,
+                             base_size = 14) +
+  theme(legend.position = "top", legend.key.width = unit(2,"cm"))
+ggsave("figures/climate gap/map_climate_binfrequency.png", width = 12.5, height = 7.9)
+
+
+
 # use these limits to grid the pre 2025 and 2025 versions ----------------------
 
 # bin inat data before BTG
@@ -100,6 +129,32 @@ bins_24 = df_24 |>
   group_by(bin) |>
   summarise("count.pre" = n(),
             "density.pre" = n()/nrow(df_24))
+bins_24_map = left_join(bins_24, bins_canada, by = "bin")
+
+# map the sampled climate space before BTG =====================================
+
+bins_raster = clim[[1]] 
+bins_raster[!is.na(bins_raster)] <- 0
+for(i in 1:nrow(bins_24_map)){
+  index = clim$wc2.1_10m_bio_1 >= bins_24_map$xmin[i] & clim$wc2.1_10m_bio_1 < bins_24_map$xmax[i] & clim$wc2.1_10m_bio_12 >= bins_24_map$ymin[i] & clim$wc2.1_10m_bio_12 < bins_24_map$ymax[i] 
+  bins_raster[index] <- bins_24_map$count.pre[i]
+}
+
+# map
+ggplot() +
+  geom_sf(data = canada, fill = "grey90", col = "grey90") +
+  geom_spatraster(data = bins_raster) +
+  colorspace::scale_fill_continuous_sequential("Batlow",
+                                               name = "Climate sampling density",
+                                               na.value = "transparent", 
+                                               rev = F, 
+                                               trans = "sqrt") +
+  hrbrthemes::theme_ipsum_rc(grid = FALSE, 
+                             axis = FALSE, axis_text_size = 1,
+                             ticks = FALSE,
+                             base_size = 14) +
+  theme(legend.position = "top", legend.key.width = unit(2,"cm"))
+ggsave("figures/climate gap/map_climate_samplingfrequency_PREJUN12025.png", width = 12.5, height = 7.9)
 
 # bin the BTG samples
 df_25$xbin = NA
@@ -201,6 +256,7 @@ ggplot() +
   colorspace::scale_fill_continuous_sequential("Batlow",
                                                name = "Coverage (%)",
                                                rev = F,
+                                               trans = "sqrt",
                                                na.value = "transparent") +
   hrbrthemes::theme_ipsum_rc(grid = FALSE, 
                              axis = FALSE, axis_text_size = 1,
